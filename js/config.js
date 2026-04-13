@@ -6,8 +6,8 @@
 // 3. Fai push su GitHub → Vercel si aggiorna automaticamente
 // ─────────────────────────────────────────────────────────────────────────────
 
-const SUPABASE_URL     = 'https://YOUR_PROJECT_ID.supabase.co';
-const SUPABASE_ANON_KEY = 'YOUR_ANON_KEY_HERE';
+const SUPABASE_URL     = 'https://sswnxtjlyixminfvgxec.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNzd254dGpseWl4bWluZnZneGVjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYwODU1MzUsImV4cCI6MjA5MTY2MTUzNX0.VPnvSvCd66jB6DTP-Q_WmKe-k558kujtJNDTG07aO6I';
 
 // Rilevamento automatico — non modificare
 const DB_CONFIGURED = !SUPABASE_URL.includes('YOUR_PROJECT_ID');
