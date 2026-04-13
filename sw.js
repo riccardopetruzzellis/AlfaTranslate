@@ -1,7 +1,7 @@
 // AlfaTranslate — Service Worker
 // Gruppo Alfano S.p.A.
 
-const CACHE_NAME = 'alfatranslate-v2';
+const CACHE_NAME = 'alfatranslate-v3';
 
 const ASSETS = [
   '/',
@@ -39,7 +39,6 @@ self.addEventListener('activate', event => {
 
 // Fetch: cache-first strategy (offline support)
 self.addEventListener('fetch', event => {
-  // Only handle GET requests
   if (event.request.method !== 'GET') return;
 
   event.respondWith(
@@ -48,7 +47,6 @@ self.addEventListener('fetch', event => {
         if (cached) return cached;
         return fetch(event.request)
           .then(response => {
-            // Cache successful responses
             if (response && response.status === 200) {
               const clone = response.clone();
               caches.open(CACHE_NAME).then(cache => cache.put(event.request, clone));
@@ -56,7 +54,6 @@ self.addEventListener('fetch', event => {
             return response;
           })
           .catch(() => {
-            // Fallback to index.html for navigation requests
             if (event.request.mode === 'navigate') {
               return caches.match('/index.html');
             }

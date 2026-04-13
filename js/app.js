@@ -3,15 +3,60 @@
 
 // ─── State ───────────────────────────────────────────────────────────────────
 const state = {
-  query:    '',
-  category: 'all',
-  level:    'all',
-  activeTermId: null,
-  history:  []
+  query:          '',
+  category:       'all',
+  level:          'all',
+  activeTermId:   null,
+  history:        [],
+  favorites:      loadFavorites(),
+  editingTermId:  null,
+  deletingTermId: null
 };
 
-let customTerms = [];
+let customTerms    = [];
 let customTermsMap = {};
+
+// ─── Favorites ────────────────────────────────────────────────────────────────
+
+const FAV_KEY = 'alfatranslate_favorites';
+
+function loadFavorites() {
+  try {
+    return new Set(JSON.parse(localStorage.getItem(FAV_KEY) || '[]'));
+  } catch { return new Set(); }
+}
+
+function saveFavorites() {
+  localStorage.setItem(FAV_KEY, JSON.stringify([...state.favorites]));
+}
+
+function isFavorite(id) {
+  return state.favorites.has(id);
+}
+
+function toggleFavorite(id) {
+  const wasAdded = !state.favorites.has(id);
+  if (wasAdded) {
+    state.favorites.add(id);
+    showToast('Aggiunto ai preferiti ★');
+  } else {
+    state.favorites.delete(id);
+    showToast('Rimosso dai preferiti');
+  }
+  saveFavorites();
+  refresh();
+  // Update fav button in open detail panel
+  updateDetailFavBtn(id);
+}
+
+function updateDetailFavBtn(id) {
+  const btn = document.getElementById('detail-fav-btn');
+  if (!btn || state.activeTermId !== id) return;
+  const fav = isFavorite(id);
+  btn.classList.toggle('fav-active', fav);
+  btn.setAttribute('aria-pressed', fav);
+  btn.title = fav ? 'Rimuovi dai preferiti' : 'Aggiungi ai preferiti';
+}
 
 // ─── Search Engine ────────────────────────────────────────────────────────────
 
@@ -23,9 +68,9 @@ function normalize(str) {
 function scoreMatch(term, nq) {
   if (!nq) return 1;
   let score = 0;
-  const en  = normalize(term.en);
-  const it  = normalize(term.it);
-  const def = normalize(term.definition);
+  const en   = normalize(term.en);
+  const it   = normalize(term.it);
+  const def  = normalize(term.definition);
   const tags = term.tags.map(t => normalize(t.replace(/_/g, ' '))).join(' ');
 
   if (en === nq)              score += 100;
@@ -36,8 +81,8 @@ function scoreMatch(term, nq) {
   else if (it.startsWith(nq)) score += 70;
   else if (it.includes(nq))   score += 50;
 
-  if (def.includes(nq))   score += 20;
-  if (tags.includes(nq))  score += 30;
+  if (def.includes(nq))  score += 20;
+  if (tags.includes(nq)) score += 30;
   return score;
 }
 
@@ -50,21 +95,26 @@ function lookupTerm(id) {
 }
 
 function search(query, category, level) {
-  const nq = normalize(query);
+  const nq   = normalize(query);
   const pool = allTerms();
 
   const direct = pool
     .filter(term => {
+      if (category === 'favorites') {
+        if (!isFavorite(term.id)) return false;
+        if (level !== 'all' && term.level !== level) return false;
+        return !nq || scoreMatch(term, nq) > 0;
+      }
       if (category !== 'all' && term.category !== category) return false;
       if (level    !== 'all' && term.level    !== level)    return false;
       return !nq || scoreMatch(term, nq) > 0;
     })
     .sort((a, b) => a.en.localeCompare(b.en, 'en', { sensitivity: 'base' }));
 
-  // Related concepts BFS (always alphabetical)
-  if (!nq) return { direct, related: [] };
+  // Related concepts BFS (only when searching, not in favorites mode)
+  if (!nq || category === 'favorites') return { direct, related: [] };
 
-  const directIds = new Set(direct.map(t => t.id));
+  const directIds  = new Set(direct.map(t => t.id));
   const relatedIds = new Set();
 
   direct.forEach(term => {
@@ -77,7 +127,6 @@ function search(query, category, level) {
   relatedIds.forEach(rid => {
     const t = lookupTerm(rid);
     if (!t) return;
-    // Apply active filters to related too
     if (category !== 'all' && t.category !== category) return;
     if (level    !== 'all' && t.level    !== level)    return;
     related.push(t);
@@ -119,8 +168,9 @@ function highlight(text, query) {
 }
 
 function renderCard(term, query, isRelated = false) {
-  const cb = CAT_BADGE[term.category] || {};
-  const lb = LVL_BADGE[term.level]    || {};
+  const cb  = CAT_BADGE[term.category] || {};
+  const lb  = LVL_BADGE[term.level]    || {};
+  const fav = isFavorite(term.id);
   return `
     <article class="card${isRelated ? ' card-related' : ''}${term.isCustom ? ' card-custom' : ''}"
              data-id="${esc(term.id)}"
@@ -132,6 +182,13 @@ function renderCard(term, query, isRelated = false) {
           <span class="card-it">${highlight(term.it, query)}</span>
         </div>
         <div class="card-badges">
+          <button class="fav-btn${fav ? ' fav-active' : ''}"
+                  data-fav-id="${esc(term.id)}"
+                  aria-label="${fav ? 'Rimuovi dai preferiti' : 'Aggiungi ai preferiti'}"
+                  aria-pressed="${fav}"
+                  title="${fav ? 'Rimuovi dai preferiti' : 'Aggiungi ai preferiti'}">
+            ${fav ? '★' : '☆'}
+          </button>
           <span class="badge ${lb.cls}">${lb.label}</span>
           <span class="badge ${cb.cls}">${cb.label}</span>
           ${term.isCustom ? '<span class="badge badge-custom">Nuovo</span>' : ''}
@@ -155,9 +212,12 @@ function renderResults(direct, related, query) {
   }
   emptyEl.hidden = true;
 
-  countEl.textContent = query
-    ? `${direct.length} risultat${direct.length === 1 ? 'o' : 'i'}${related.length ? ` · ${related.length} correlati` : ''}`
-    : `${direct.length + related.length} termini`;
+  const isFavMode = state.category === 'favorites';
+  countEl.textContent = isFavMode
+    ? `${direct.length} preferit${direct.length === 1 ? 'o' : 'i'}`
+    : query
+      ? `${direct.length} risultat${direct.length === 1 ? 'o' : 'i'}${related.length ? ` · ${related.length} correlati` : ''}`
+      : `${direct.length + related.length} termini`;
 
   let html = direct.map(t => renderCard(t, query)).join('');
 
@@ -172,6 +232,13 @@ function renderResults(direct, related, query) {
     card.addEventListener('click',   () => openDetail(card.dataset.id));
     card.addEventListener('keydown', e => {
       if (e.key === 'Enter' || e.key === ' ') openDetail(card.dataset.id);
+    });
+  });
+
+  container.querySelectorAll('.fav-btn').forEach(btn => {
+    btn.addEventListener('click', e => {
+      e.stopPropagation();
+      toggleFavorite(btn.dataset.favId);
     });
   });
 }
@@ -217,6 +284,19 @@ function openDetail(id) {
     chip.addEventListener('click', () => openDetail(chip.dataset.id));
   });
 
+  // Favorite button state
+  const favBtn = document.getElementById('detail-fav-btn');
+  const fav = isFavorite(id);
+  favBtn.classList.toggle('fav-active', fav);
+  favBtn.setAttribute('aria-pressed', fav);
+  favBtn.title = fav ? 'Rimuovi dai preferiti' : 'Aggiungi ai preferiti';
+
+  // Show edit/delete only for custom terms
+  const editBtn   = document.getElementById('detail-edit-btn');
+  const deleteBtn = document.getElementById('detail-delete-btn');
+  if (editBtn)   editBtn.hidden   = !term.isCustom;
+  if (deleteBtn) deleteBtn.hidden = !term.isCustom;
+
   document.getElementById('detail-back-nav').style.display =
     state.history.length > 1 ? 'flex' : 'none';
 
@@ -249,12 +329,7 @@ function openAddModal() {
   document.getElementById('add-modal').classList.add('open');
   document.getElementById('overlay').classList.add('show');
   document.getElementById('add-en').focus();
-
-  if (!DB_CONFIGURED) {
-    document.getElementById('db-notice').hidden = false;
-  } else {
-    document.getElementById('db-notice').hidden = true;
-  }
+  document.getElementById('db-notice').hidden = DB_CONFIGURED;
 }
 
 function closeAddModal() {
@@ -267,10 +342,10 @@ function closeAddModal() {
 
 async function submitNewTerm(e) {
   e.preventDefault();
-  const btn     = document.getElementById('add-submit');
-  const errEl   = document.getElementById('add-error');
+  const btn   = document.getElementById('add-submit');
+  const errEl = document.getElementById('add-error');
   errEl.textContent = '';
-  btn.disabled  = true;
+  btn.disabled = true;
   btn.textContent = 'Salvataggio…';
 
   const data = {
@@ -287,6 +362,7 @@ async function submitNewTerm(e) {
     customTermsMap[saved.id] = saved;
     closeAddModal();
     showToast('Termine aggiunto con successo!');
+    updateStats();
     refresh();
   } catch (err) {
     errEl.textContent = 'Errore nel salvataggio: ' + err.message;
@@ -296,11 +372,134 @@ async function submitNewTerm(e) {
   }
 }
 
+// ─── Edit Term Modal ──────────────────────────────────────────────────────────
+
+function openEditModal(id) {
+  const term = lookupTerm(id);
+  if (!term || !term.isCustom) return;
+
+  state.editingTermId = id;
+
+  document.getElementById('edit-term-id').value   = id;
+  document.getElementById('edit-en').value         = term.en;
+  document.getElementById('edit-it').value         = term.it;
+  document.getElementById('edit-definition').value = term.definition;
+  document.getElementById('edit-category').value   = term.category;
+  document.getElementById('edit-level').value      = term.level;
+  document.getElementById('edit-error').textContent = '';
+
+  document.getElementById('edit-modal').classList.add('open');
+  document.getElementById('overlay').classList.add('show');
+  document.getElementById('edit-en').focus();
+}
+
+function closeEditModal() {
+  document.getElementById('edit-modal').classList.remove('open');
+  state.editingTermId = null;
+  // Keep overlay if detail panel is open
+  if (!document.getElementById('detail-panel').classList.contains('open')) {
+    document.getElementById('overlay').classList.remove('show');
+  }
+}
+
+async function submitEditTerm(e) {
+  e.preventDefault();
+  const btn   = document.getElementById('edit-submit');
+  const errEl = document.getElementById('edit-error');
+  errEl.textContent = '';
+  btn.disabled = true;
+  btn.textContent = 'Salvataggio…';
+
+  const id   = document.getElementById('edit-term-id').value;
+  const data = {
+    en:         document.getElementById('edit-en').value.trim(),
+    it:         document.getElementById('edit-it').value.trim(),
+    definition: document.getElementById('edit-definition').value.trim(),
+    category:   document.getElementById('edit-category').value,
+    level:      document.getElementById('edit-level').value
+  };
+
+  try {
+    const updated = await updateCustomTerm(id, data);
+    // Refresh in-memory state
+    const idx = customTerms.findIndex(t => t.id === id);
+    if (idx >= 0) customTerms[idx] = updated;
+    customTermsMap[id] = updated;
+
+    closeEditModal();
+    // Re-open detail panel with updated data
+    state.history = [];
+    openDetail(id);
+    showToast('Termine aggiornato!');
+    refresh();
+  } catch (err) {
+    errEl.textContent = 'Errore nel salvataggio: ' + err.message;
+  } finally {
+    btn.disabled    = false;
+    btn.textContent = 'Salva modifiche';
+  }
+}
+
+// ─── Delete Term ──────────────────────────────────────────────────────────────
+
+function openDeleteModal(id) {
+  const term = lookupTerm(id);
+  if (!term || !term.isCustom) return;
+
+  state.deletingTermId = id;
+  document.getElementById('delete-term-name').textContent = term.en;
+  document.getElementById('delete-modal').classList.add('open');
+  document.getElementById('overlay').classList.add('show');
+}
+
+function closeDeleteModal() {
+  document.getElementById('delete-modal').classList.remove('open');
+  state.deletingTermId = null;
+  if (!document.getElementById('detail-panel').classList.contains('open')) {
+    document.getElementById('overlay').classList.remove('show');
+  }
+}
+
+async function confirmDelete() {
+  const id  = state.deletingTermId;
+  if (!id) return;
+
+  const btn = document.getElementById('delete-confirm-btn');
+  btn.disabled = true;
+  btn.textContent = 'Eliminazione…';
+
+  try {
+    await deleteCustomTerm(id);
+
+    // Remove from in-memory state
+    customTerms = customTerms.filter(t => t.id !== id);
+    delete customTermsMap[id];
+
+    // Remove from favorites if present
+    state.favorites.delete(id);
+    saveFavorites();
+
+    closeDeleteModal();
+    closeDetail();
+    showToast('Termine eliminato.');
+    updateStats();
+    refresh();
+  } catch (err) {
+    showToast('Errore: ' + err.message);
+  } finally {
+    btn.disabled    = false;
+    btn.textContent = 'Elimina';
+  }
+}
+
+// ─── Toast ────────────────────────────────────────────────────────────────────
+
 function showToast(msg) {
   const toast = document.getElementById('toast');
   toast.textContent = msg;
   toast.classList.add('show');
-  setTimeout(() => toast.classList.remove('show'), 3000);
+  clearTimeout(showToast._timer);
+  showToast._timer = setTimeout(() => toast.classList.remove('show'), 3000);
 }
 
 // ─── Filters ──────────────────────────────────────────────────────────────────
@@ -345,6 +544,58 @@ function clearSearch() {
   refresh();
 }
 
+// ─── Stats ────────────────────────────────────────────────────────────────────
+
+function updateStats() {
+  const counts = { finance: 0, realestate: 0, construction: 0 };
+  GLOSSARY.forEach(t => counts[t.category]++);
+  const total = GLOSSARY.length + customTerms.length;
+  document.getElementById('stats-summary').textContent =
+    `${total} termini · ${counts.finance} Finance · ${counts.realestate} Real Estate · ${counts.construction} Edilizia`;
+}
+
+// ─── PWA Install ──────────────────────────────────────────────────────────────
+
+let deferredInstallPrompt = null;
+
+function isIOS() {
+  return /iphone|ipad|ipod/i.test(navigator.userAgent) && !window.MSStream;
+}
+
+function isStandalone() {
+  return window.matchMedia('(display-mode: standalone)').matches
+      || window.navigator.standalone === true;
+}
+
+function showInstallBtn() {
+  document.getElementById('install-btn').hidden = false;
+}
+
+function hideInstallBtn() {
+  document.getElementById('install-btn').hidden = true;
+}
+
+async function promptInstall() {
+  if (deferredInstallPrompt) {
+    deferredInstallPrompt.prompt();
+    const { outcome } = await deferredInstallPrompt.userChoice;
+    deferredInstallPrompt = null;
+    if (outcome === 'accepted') hideInstallBtn();
+  } else if (isIOS()) {
+    // Show iOS instructions modal
+    document.getElementById('ios-modal').classList.add('open');
+    document.getElementById('overlay').classList.add('show');
+  }
+}
+
+function closeIOSModal() {
+  document.getElementById('ios-modal').classList.remove('open');
+  if (!document.getElementById('detail-panel').classList.contains('open')
+   && !document.getElementById('add-modal').classList.contains('open')) {
+    document.getElementById('overlay').classList.remove('show');
+  }
+}
+
 // ─── Init ─────────────────────────────────────────────────────────────────────
 
 async function init() {
@@ -353,6 +604,9 @@ async function init() {
     customTerms = await loadCustomTerms();
     customTerms.forEach(t => { customTermsMap[t.id] = t; });
   } catch { /* start without custom terms */ }
+
+  // Stats
+  updateStats();
 
   // Search
   document.getElementById('search-input').addEventListener('input', onSearchInput);
@@ -369,33 +623,74 @@ async function init() {
   );
 
   // Detail panel
-  document.getElementById('detail-close').addEventListener('click',    closeDetail);
+  document.getElementById('detail-close').addEventListener('click', closeDetail);
   document.getElementById('detail-back-nav').addEventListener('click', navigateBack);
+  document.getElementById('detail-fav-btn').addEventListener('click', () => {
+    if (state.activeTermId) toggleFavorite(state.activeTermId);
+  });
+  document.getElementById('detail-edit-btn').addEventListener('click', () => {
+    if (state.activeTermId) openEditModal(state.activeTermId);
+  });
+  document.getElementById('detail-delete-btn').addEventListener('click', () => {
+    if (state.activeTermId) openDeleteModal(state.activeTermId);
+  });
 
   // Add term
   document.getElementById('fab').addEventListener('click', openAddModal);
   document.getElementById('add-close').addEventListener('click', closeAddModal);
   document.getElementById('add-form').addEventListener('submit', submitNewTerm);
 
-  // Overlay
+  // Edit term
+  document.getElementById('edit-close').addEventListener('click', closeEditModal);
+  document.getElementById('edit-form').addEventListener('submit', submitEditTerm);
+
+  // Delete term
+  document.getElementById('delete-close').addEventListener('click', closeDeleteModal);
+  document.getElementById('delete-cancel-btn').addEventListener('click', closeDeleteModal);
+  document.getElementById('delete-confirm-btn').addEventListener('click', confirmDelete);
+
+  // iOS install modal
+  document.getElementById('ios-close').addEventListener('click', closeIOSModal);
+
+  // Install button
+  document.getElementById('install-btn').addEventListener('click', promptInstall);
+
+  // Overlay (close topmost modal)
   document.getElementById('overlay').addEventListener('click', () => {
-    if (document.getElementById('add-modal').classList.contains('open')) closeAddModal();
-    else closeDetail();
+    if (document.getElementById('edit-modal').classList.contains('open'))   { closeEditModal();   return; }
+    if (document.getElementById('delete-modal').classList.contains('open')) { closeDeleteModal(); return; }
+    if (document.getElementById('add-modal').classList.contains('open'))    { closeAddModal();    return; }
+    if (document.getElementById('ios-modal').classList.contains('open'))    { closeIOSModal();    return; }
+    closeDetail();
   });
 
   // Keyboard
   document.addEventListener('keydown', e => {
-    if (e.key === 'Escape') {
-      if (document.getElementById('add-modal').classList.contains('open')) closeAddModal();
-      else closeDetail();
-    }
+    if (e.key !== 'Escape') return;
+    if (document.getElementById('edit-modal').classList.contains('open'))   { closeEditModal();   return; }
+    if (document.getElementById('delete-modal').classList.contains('open')) { closeDeleteModal(); return; }
+    if (document.getElementById('add-modal').classList.contains('open'))    { closeAddModal();    return; }
+    if (document.getElementById('ios-modal').classList.contains('open'))    { closeIOSModal();    return; }
+    closeDetail();
   });
 
-  // Stats
-  const counts = { finance: 0, realestate: 0, construction: 0 };
-  GLOSSARY.forEach(t => counts[t.category]++);
-  document.getElementById('stats-summary').textContent =
-    `${GLOSSARY.length + customTerms.length} termini · ${counts.finance} Finance · ${counts.realestate} Real Estate · ${counts.construction} Edilizia`;
+  // PWA install prompt
+  window.addEventListener('beforeinstallprompt', e => {
+    e.preventDefault();
+    deferredInstallPrompt = e;
+    showInstallBtn();
+  });
+
+  window.addEventListener('appinstalled', () => {
+    hideInstallBtn();
+    deferredInstallPrompt = null;
+    showToast('App installata!');
+  });
+
+  // Show install button on iOS (if not already standalone)
+  if (isIOS() && !isStandalone()) {
+    showInstallBtn();
+  }
 
   refresh();
 }
