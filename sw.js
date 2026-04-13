@@ -1,19 +1,22 @@
 // AlfaTranslate — Service Worker
 // Gruppo Alfano S.p.A.
 
-const CACHE_NAME = 'alfatranslate-v3';
+const CACHE_NAME = 'alfatranslate-v4';
 
+// config.js escluso: contiene credenziali che devono sempre essere fresche
 const ASSETS = [
   '/',
   '/index.html',
   '/css/style.css',
-  '/js/config.js',
   '/js/data.js',
   '/js/db.js',
   '/js/app.js',
   '/manifest.json',
   '/icons/icon.svg'
 ];
+
+// File da non mettere mai in cache (sempre fetch dalla rete)
+const NO_CACHE = ['/js/config.js'];
 
 // Install: pre-cache all assets
 self.addEventListener('install', event => {
@@ -37,9 +40,18 @@ self.addEventListener('activate', event => {
   );
 });
 
-// Fetch: cache-first strategy (offline support)
+// Fetch: network-first per config.js, cache-first per tutto il resto
 self.addEventListener('fetch', event => {
   if (event.request.method !== 'GET') return;
+
+  const url = new URL(event.request.url);
+  const isNoCache = NO_CACHE.some(p => url.pathname === p);
+
+  if (isNoCache) {
+    // Sempre dalla rete, senza salvare in cache
+    event.respondWith(fetch(event.request));
+    return;
+  }
 
   event.respondWith(
     caches.match(event.request)
