@@ -1,13 +1,15 @@
 // AlfaTranslate — Service Worker
 // Gruppo Alfano S.p.A.
 
-const CACHE_NAME = 'alfatranslate-v1';
+const CACHE_NAME = 'alfatranslate-v2';
 
 const ASSETS = [
   '/',
   '/index.html',
   '/css/style.css',
+  '/js/config.js',
   '/js/data.js',
+  '/js/db.js',
   '/js/app.js',
   '/manifest.json',
   '/icons/icon.svg'
