@@ -29,6 +29,18 @@
         <div class="header-app-name">AlfaTranslate</div>
         <div class="header-sub">Gruppo Alfano · Glossario EN-IT</div>
       </div>
+      <!-- PWA install button -->
+      <button id="install-btn" class="install-btn" hidden
+              aria-label="Installa l'app sulla schermata Home"
+              title="Installa app">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
+             stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
+             stroke-linejoin="round" aria-hidden="true">
+          <path d="M12 2v13M7 10l5 5 5-5"/>
+          <path d="M5 20h14"/>
+        </svg>
+        <span>Installa</span>
+      </button>
     </div>
     <div class="header-flag-stripe" aria-hidden="true"></div>
 
@@ -64,6 +76,7 @@
         <button class="filter-btn filter-cat"        data-cat="finance"      aria-pressed="false">💹 Finance</button>
         <button class="filter-btn filter-cat"        data-cat="realestate"   aria-pressed="false">🏢 Real Estate</button>
         <button class="filter-btn filter-cat"        data-cat="construction" aria-pressed="false">🏗️ Edilizia</button>
+        <button class="filter-btn filter-cat"        data-cat="favorites"    aria-pressed="false">★ Preferiti</button>
       </nav>
       <!-- Level row -->
       <div class="filter-row-label" style="margin-top:6px">Livello</div>
@@ -117,14 +130,48 @@
       </svg>
       Indietro
     </button>
-    <button id="detail-close" aria-label="Chiudi">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
-           stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
-           aria-hidden="true">
-        <line x1="18" y1="6" x2="6" y2="18"/>
-        <line x1="6" y1="6" x2="18" y2="18"/>
-      </svg>
-    </button>
+    <div class="detail-nav-actions">
+      <!-- Favorite -->
+      <button id="detail-fav-btn" class="detail-nav-btn" aria-pressed="false"
+              title="Aggiungi ai preferiti" aria-label="Aggiungi ai preferiti">
+        <svg width="16" height="16" viewBox="0 0 24 24"
+             fill="none" stroke="currentColor" stroke-width="2.2"
+             stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+        </svg>
+      </button>
+      <!-- Edit (only for custom terms) -->
+      <button id="detail-edit-btn" class="detail-nav-btn detail-edit-btn" hidden
+              title="Modifica termine" aria-label="Modifica termine">
+        <svg width="15" height="15" viewBox="0 0 24 24"
+             fill="none" stroke="currentColor" stroke-width="2.2"
+             stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+          <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+        </svg>
+      </button>
+      <!-- Delete (only for custom terms) -->
+      <button id="detail-delete-btn" class="detail-nav-btn detail-delete-btn" hidden
+              title="Elimina termine" aria-label="Elimina termine">
+        <svg width="15" height="15" viewBox="0 0 24 24"
+             fill="none" stroke="currentColor" stroke-width="2.2"
+             stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <polyline points="3 6 5 6 21 6"/>
+          <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
+          <path d="M10 11v6M14 11v6"/>
+          <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/>
+        </svg>
+      </button>
+      <!-- Close -->
+      <button id="detail-close" aria-label="Chiudi">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
+             stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
+             aria-hidden="true">
+          <line x1="18" y1="6" x2="6" y2="18"/>
+          <line x1="6" y1="6" x2="18" y2="18"/>
+        </svg>
+      </button>
+    </div>
   </div>
   <div class="detail-body">
     <div class="detail-badges">
@@ -158,8 +205,6 @@
   </div>
 
   <form id="add-form" novalidate>
-
-    <!-- DB notice (hidden when Supabase is configured) -->
     <div id="db-notice" hidden>
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
            stroke="currentColor" stroke-width="2" stroke-linecap="round"
@@ -168,8 +213,7 @@
         <line x1="12" y1="8" x2="12" y2="12"/>
         <line x1="12" y1="16" x2="12.01" y2="16"/>
       </svg>
-      <span>Modalità locale: il termine sarà visibile solo su questo dispositivo.
-            Per condividerlo con tutti configura Supabase (vedi SUPABASE_SETUP.md).</span>
+      <span>Modalità locale: il termine sarà visibile solo su questo dispositivo.</span>
     </div>
 
     <div class="form-field">
@@ -177,19 +221,16 @@
       <input id="add-en" class="form-input" type="text" maxlength="200"
              placeholder="es. Earnout" required autocomplete="off" />
     </div>
-
     <div class="form-field">
       <label class="form-label" for="add-it">Traduzione italiana *</label>
       <input id="add-it" class="form-input" type="text" maxlength="200"
              placeholder="es. Clausola di earn-out" required autocomplete="off" />
     </div>
-
     <div class="form-field">
       <label class="form-label" for="add-definition">Definizione in italiano *</label>
       <textarea id="add-definition" class="form-textarea" maxlength="1000"
                 placeholder="Breve spiegazione del termine…" required></textarea>
     </div>
-
     <div class="form-row">
       <div class="form-field">
         <label class="form-label" for="add-category">Categoria *</label>
@@ -210,11 +251,139 @@
         </select>
       </div>
     </div>
-
     <p id="add-error" role="alert"></p>
-
     <button id="add-submit" type="submit">Aggiungi termine</button>
   </form>
+</div>
+
+<!-- ── Edit Term Modal ──────────────────────────────────────────────── -->
+<div id="edit-modal" role="dialog" aria-modal="true" aria-label="Modifica termine">
+  <div class="modal-drag-handle" aria-hidden="true"></div>
+  <div class="modal-header">
+    <span class="modal-title">Modifica termine</span>
+    <button id="edit-close" aria-label="Chiudi">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
+           stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
+           aria-hidden="true">
+        <line x1="18" y1="6" x2="6" y2="18"/>
+        <line x1="6" y1="6" x2="18" y2="18"/>
+      </svg>
+    </button>
+  </div>
+
+  <form id="edit-form" novalidate>
+    <input type="hidden" id="edit-term-id"/>
+
+    <div class="form-field">
+      <label class="form-label" for="edit-en">Termine in inglese *</label>
+      <input id="edit-en" class="form-input" type="text" maxlength="200"
+             required autocomplete="off" />
+    </div>
+    <div class="form-field">
+      <label class="form-label" for="edit-it">Traduzione italiana *</label>
+      <input id="edit-it" class="form-input" type="text" maxlength="200"
+             required autocomplete="off" />
+    </div>
+    <div class="form-field">
+      <label class="form-label" for="edit-definition">Definizione in italiano *</label>
+      <textarea id="edit-definition" class="form-textarea" maxlength="1000"
+                required></textarea>
+    </div>
+    <div class="form-row">
+      <div class="form-field">
+        <label class="form-label" for="edit-category">Categoria *</label>
+        <select id="edit-category" class="form-select" required>
+          <option value="">Scegli…</option>
+          <option value="finance">Finance</option>
+          <option value="realestate">Real Estate</option>
+          <option value="construction">Edilizia</option>
+        </select>
+      </div>
+      <div class="form-field">
+        <label class="form-label" for="edit-level">Livello *</label>
+        <select id="edit-level" class="form-select" required>
+          <option value="">Scegli…</option>
+          <option value="base">Base</option>
+          <option value="medio">Medio</option>
+          <option value="avanzato">Avanzato</option>
+        </select>
+      </div>
+    </div>
+    <p id="edit-error" role="alert"></p>
+    <button id="edit-submit" type="submit">Salva modifiche</button>
+  </form>
+</div>
+
+<!-- ── Delete Confirmation Modal ────────────────────────────────────── -->
+<div id="delete-modal" role="dialog" aria-modal="true" aria-label="Conferma eliminazione">
+  <div class="modal-drag-handle" aria-hidden="true"></div>
+  <div class="modal-header">
+    <span class="modal-title">Elimina termine</span>
+    <button id="delete-close" aria-label="Chiudi">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
+           stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
+           aria-hidden="true">
+        <line x1="18" y1="6" x2="6" y2="18"/>
+        <line x1="6" y1="6" x2="18" y2="18"/>
+      </svg>
+    </button>
+  </div>
+  <div class="delete-body">
+    <div class="delete-icon" aria-hidden="true">
+      <svg width="32" height="32" viewBox="0 0 24 24" fill="none"
+           stroke="currentColor" stroke-width="1.8" stroke-linecap="round"
+           stroke-linejoin="round">
+        <circle cx="12" cy="12" r="10"/>
+        <line x1="12" y1="8" x2="12" y2="12"/>
+        <line x1="12" y1="16" x2="12.01" y2="16"/>
+      </svg>
+    </div>
+    <p class="delete-message">
+      Sei sicuro di voler eliminare il termine<br/>
+      <strong id="delete-term-name"></strong>?
+    </p>
+    <p class="delete-warning">Questa azione non può essere annullata.</p>
+    <div class="delete-actions">
+      <button id="delete-cancel-btn" class="delete-cancel">Annulla</button>
+      <button id="delete-confirm-btn" class="delete-confirm">Elimina</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── iOS Install Modal ─────────────────────────────────────────────── -->
+<div id="ios-modal" role="dialog" aria-modal="true" aria-label="Installa su iOS">
+  <div class="modal-drag-handle" aria-hidden="true"></div>
+  <div class="modal-header">
+    <span class="modal-title">Installa AlfaTranslate</span>
+    <button id="ios-close" aria-label="Chiudi">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
+           stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
+           aria-hidden="true">
+        <line x1="18" y1="6" x2="6" y2="18"/>
+        <line x1="6" y1="6" x2="18" y2="18"/>
+      </svg>
+    </button>
+  </div>
+  <div class="ios-install-body">
+    <img src="icons/icon.svg" alt="AlfaTranslate" class="ios-install-icon" width="64" height="64"/>
+    <p class="ios-install-title">Aggiungi alla schermata Home</p>
+    <p class="ios-install-subtitle">Usa AlfaTranslate come un'app nativa, senza browser.</p>
+    <ol class="ios-install-steps">
+      <li>
+        Tocca
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
+             stroke="currentColor" stroke-width="2" stroke-linecap="round"
+             stroke-linejoin="round" style="vertical-align:-3px">
+          <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/>
+          <polyline points="16 6 12 2 8 6"/>
+          <line x1="12" y1="2" x2="12" y2="15"/>
+        </svg>
+        <strong>Condividi</strong> nella barra del browser
+      </li>
+      <li>Scorri e seleziona <strong>"Aggiungi alla schermata Home"</strong></li>
+      <li>Tocca <strong>Aggiungi</strong> in alto a destra</li>
+    </ol>
+  </div>
 </div>
 
 <!-- ── Toast ────────────────────────────────────────────────────────── -->

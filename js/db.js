@@ -67,7 +67,74 @@ async function saveCustomTerm(data) {
   }
 
   const [saved] = await res.json();
+  // Mirror to localStorage as backup
+  const locals = getLocalTerms();
+  locals.push(rowToTerm(saved));
+  localStorage.setItem(LOCAL_KEY, JSON.stringify(locals));
   return rowToTerm(saved);
+}
+
+// ─── Update custom term ──────────────────────────────────────────────────────
+
+async function updateCustomTerm(id, data) {
+  const payload = {
+    en:         data.en.trim(),
+    it:         data.it.trim(),
+    definition: data.definition.trim(),
+    category:   data.category,
+    level:      data.level
+  };
+
+  // Local-only term (ID starts with "local_") → localStorage only
+  if (!DB_CONFIGURED || String(id).startsWith('local_')) {
+    return updateLocalTerm(id, payload);
+  }
+
+  const res = await fetch(
+    `${SUPABASE_URL}/rest/v1/custom_terms?id=eq.${encodeURIComponent(id)}`,
+    {
+      method:  'PATCH',
+      headers: sbHeaders({ 'Prefer': 'return=representation' }),
+      body:    JSON.stringify(payload)
+    }
+  );
+
+  if (!res.ok) {
+    const errText = await res.text();
+    throw new Error(errText || `HTTP ${res.status}`);
+  }
+
+  const rows = await res.json();
+  if (!rows.length) throw new Error('Termine non trovato nel database');
+  const updated = rowToTerm(rows[0]);
+  // Mirror update to localStorage
+  updateLocalTerm(id, payload);
+  return updated;
+}
+
+// ─── Delete custom term ──────────────────────────────────────────────────────
+
+async function deleteCustomTerm(id) {
+  // Local-only term → localStorage only
+  if (!DB_CONFIGURED || String(id).startsWith('local_')) {
+    deleteLocalTerm(id);
+    return;
+  }
+
+  const res = await fetch(
+    `${SUPABASE_URL}/rest/v1/custom_terms?id=eq.${encodeURIComponent(id)}`,
+    {
+      method:  'DELETE',
+      headers: sbHeaders()
+    }
+  );
+
+  if (!res.ok) {
+    const errText = await res.text();
+    throw new Error(errText || `HTTP ${res.status}`);
+  }
+
+  deleteLocalTerm(id);
 }
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -92,4 +159,18 @@ function getLocalTerms() {
   } catch {
     return [];
   }
+}
+
+function updateLocalTerm(id, payload) {
+  const terms = getLocalTerms();
+  const idx = terms.findIndex(t => t.id === id);
+  if (idx < 0) throw new Error('Termine non trovato localmente');
+  terms[idx] = { ...terms[idx], ...payload };
+  localStorage.setItem(LOCAL_KEY, JSON.stringify(terms));
+  return terms[idx];
+}
+
+function deleteLocalTerm(id) {
+  const terms = getLocalTerms().filter(t => t.id !== id);
+  localStorage.setItem(LOCAL_KEY, JSON.stringify(terms));
 }

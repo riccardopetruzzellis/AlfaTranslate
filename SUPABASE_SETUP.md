@@ -51,6 +51,14 @@ CREATE POLICY "lettura_pubblica" ON custom_terms
 -- Chiunque può aggiungere nuovi termini
 CREATE POLICY "inserimento_pubblico" ON custom_terms
   FOR INSERT TO anon WITH CHECK (true);
+
+-- Chiunque può modificare termini esistenti
+CREATE POLICY "modifica_pubblica" ON custom_terms
+  FOR UPDATE TO anon USING (true) WITH CHECK (true);
+
+-- Chiunque può eliminare termini
+CREATE POLICY "eliminazione_pubblica" ON custom_terms
+  FOR DELETE TO anon USING (true);
 ```
 
 ---
@@ -92,6 +100,19 @@ Vercel rileverà il push automaticamente e ridistribuirà l'app in ~30 secondi.
 - Il pulsante **+** (rosso, in basso a destra) apre il modulo di inserimento
 - I termini aggiunti appaiono subito nell'app con il badge **Nuovo**
 - Sono visibili a **tutti** gli utenti che accedono all'app
+- Dal pannello di dettaglio di un termine personalizzato è possibile **modificarlo** (✏) o **eliminarlo** (🗑)
+
+---
+
+## Funzionalità disponibili
+
+| Funzione | Descrizione |
+|----------|-------------|
+| **Aggiungi termine** | Pulsante + rosso in basso a destra |
+| **Modifica termine** | Icona ✏ nel pannello di dettaglio (solo termini personalizzati) |
+| **Elimina termine** | Icona 🗑 nel pannello di dettaglio (solo termini personalizzati) |
+| **Preferiti** | Stella ★ su ogni card — filtro "Preferiti" nella barra categoria |
+| **Installa come app** | Pulsante "Installa" nell'header (su Android/Chrome e iOS/Safari) |
 
 ---
 
@@ -102,8 +123,18 @@ Supabase è completamente gratuito per questo uso: piano Free include 500 MB di
 database e 50.000 richieste al giorno.
 
 **I dati sono sicuri?**
-La chiave `anon` è progettata per essere pubblica. Le policy RLS garantiscono
-che gli utenti possano solo leggere e inserire (non modificare né cancellare).
+La chiave `anon` è progettata per essere pubblica. Le policy RLS controllano
+le operazioni permesse (lettura, inserimento, modifica, eliminazione).
 
-**Come cancello un termine errato?**
-Accedi a Supabase → Table Editor → `custom_terms` e cancella manualmente la riga.
+**Come aggiorno le policy su un progetto Supabase esistente?**
+Vai su Supabase → SQL Editor e incolla:
+```sql
+CREATE POLICY "modifica_pubblica" ON custom_terms
+  FOR UPDATE TO anon USING (true) WITH CHECK (true);
+
+CREATE POLICY "eliminazione_pubblica" ON custom_terms
+  FOR DELETE TO anon USING (true);
+```
+
+**Come cancello un termine errato manualmente?**
+Accedi a Supabase → Table Editor → `custom_terms` e cancella la riga desiderata.
