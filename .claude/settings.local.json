@@ -1,0 +1,7 @@
+{
+  "permissions": {
+    "allow": [
+      "mcp__PDF_Tools_-_Fill__Analyze__Extract__View__read_pdf_content"
+    ]
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "name": "AlfaTranslate — Gruppo Alfano",
+  "short_name": "AlfaTranslate",
+  "description": "Glossario tecnico EN-IT per Finance, Real Estate e Edilizia — Gruppo Alfano S.p.A.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#012169",
+  "theme_color": "#012169",
+  "orientation": "portrait-primary",
+  "lang": "it",
+  "categories": ["education", "business", "productivity"],
+  "icons": [
+    {
+      "src": "icons/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "screenshots": []
+}

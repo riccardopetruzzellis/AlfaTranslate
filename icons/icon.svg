@@ -1,0 +1,44 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!-- Blue background (Union Jack) -->
+  <rect width="512" height="512" fill="#012169"/>
+
+  <!-- White St. Andrew's cross (diagonals) -->
+  <polygon points="0,0 102,0 512,410 512,512 410,512 0,102" fill="white"/>
+  <polygon points="512,0 410,0 0,410 0,512 102,512 512,102" fill="white"/>
+
+  <!-- Red St. Patrick's cross (simplified counterchange diagonals) -->
+  <!-- top-left triangle: red offset to the right -->
+  <polygon points="0,0 34,0 256,188 256,222 222,222 0,34" fill="#C8102E"/>
+  <!-- top-right triangle: red offset to the left -->
+  <polygon points="512,0 478,0 256,188 256,222 290,222 512,34" fill="#C8102E"/>
+  <!-- bottom-left triangle -->
+  <polygon points="0,512 34,512 256,324 256,290 222,290 0,478" fill="#C8102E"/>
+  <!-- bottom-right triangle -->
+  <polygon points="512,512 478,512 256,324 256,290 290,290 512,478" fill="#C8102E"/>
+
+  <!-- White St. George's cross (horizontal) -->
+  <rect x="0" y="205" width="512" height="102" fill="white"/>
+  <!-- White St. George's cross (vertical) -->
+  <rect x="205" y="0" width="102" height="512" fill="white"/>
+
+  <!-- Red St. George's cross (horizontal) -->
+  <rect x="0" y="222" width="512" height="68" fill="#C8102E"/>
+  <!-- Red St. George's cross (vertical) -->
+  <rect x="222" y="0" width="68" height="512" fill="#C8102E"/>
+
+  <!-- White circular overlay for logo -->
+  <circle cx="256" cy="256" r="158" fill="white" fill-opacity="0.93"/>
+
+  <!-- Decorative ring -->
+  <circle cx="256" cy="256" r="158" fill="none" stroke="#012169" stroke-width="4"/>
+
+  <!-- GA monogram -->
+  <text x="256" y="218" text-anchor="middle" font-family="Georgia, 'Times New Roman', serif" font-size="88" font-weight="bold" fill="#012169">GA</text>
+
+  <!-- Separator line -->
+  <rect x="156" y="238" width="200" height="4" fill="#C8102E"/>
+
+  <!-- App name -->
+  <text x="256" y="295" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="34" font-weight="bold" letter-spacing="4" fill="#C8102E">ALFA</text>
+  <text x="256" y="336" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="22" letter-spacing="3" fill="#012169">TRANSLATE</text>
+</svg>
