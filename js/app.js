@@ -335,6 +335,7 @@ async function speak(text, lang, btnEl) {
       TTS_CACHE.set(cacheKey, audioUrl);
     } catch (err) {
       console.warn('ElevenLabs TTS fallback:', err.message);
+      showToast('⚠ Pronuncia: ' + err.message);
       if (btnEl) btnEl.classList.remove('speaking');
       return speakNative(text, lang);
     }
