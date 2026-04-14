@@ -246,12 +246,53 @@ function renderResults(direct, related, query) {
 
 // ─── Pronunciation (TTS) ─────────────────────────────────────────────────────
 
-function speak(text, lang) {
+// Carica le voci in modo asincrono (necessario su Chrome)
+function getVoices() {
+  return new Promise(resolve => {
+    const list = window.speechSynthesis.getVoices();
+    if (list.length) { resolve(list); return; }
+    window.speechSynthesis.addEventListener('voiceschanged', () => {
+      resolve(window.speechSynthesis.getVoices());
+    }, { once: true });
+  });
+}
+
+// Sceglie la voce migliore per la lingua richiesta
+function pickBestVoice(voices, lang) {
+  const primary = lang.slice(0, 2).toLowerCase();
+  const candidates = voices.filter(v => v.lang.toLowerCase().startsWith(primary));
+  if (!candidates.length) return null;
+
+  const scored = candidates.map(v => {
+    let score = 0;
+    // Corrispondenza esatta con la locale (es. it-IT, en-GB)
+    if (v.lang.toLowerCase() === lang.toLowerCase()) score += 10;
+    // Voci neurali / enhanced / premium (iOS, Windows 11, Google)
+    if (/neural|enhanced|premium|natural/i.test(v.name)) score += 8;
+    // Google TTS online (ottima qualità su Chrome)
+    if (/google/i.test(v.name)) score += 6;
+    // Voci di sistema locali (migliori in offline)
+    if (v.localService) score += 2;
+    return { voice: v, score };
+  });
+
+  scored.sort((a, b) => b.score - a.score);
+  return scored[0].voice;
+}
+
+async function speak(text, lang) {
   if (!window.speechSynthesis) return;
   window.speechSynthesis.cancel();
-  const utt = new SpeechSynthesisUtterance(text);
-  utt.lang = lang;
-  utt.rate = 0.9;
+
+  const voices = await getVoices();
+  const utt   = new SpeechSynthesisUtterance(text);
+  utt.lang  = lang;
+  utt.rate  = 0.85;
+  utt.pitch = 1;
+
+  const voice = pickBestVoice(voices, lang);
+  if (voice) utt.voice = voice;
+
   window.speechSynthesis.speak(utt);
 }
 
