@@ -1,7 +1,7 @@
 // AlfaTranslate — Service Worker
 // Gruppo Alfano S.p.A.
 
-const CACHE_NAME = 'alfatranslate-v4';
+const CACHE_NAME = 'alfatranslate-v5';
 
 // config.js escluso: contiene credenziali che devono sempre essere fresche
 const ASSETS = [
