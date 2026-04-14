@@ -1050,7 +1050,7 @@ const GLOSSARY = [
     definition: "Insieme di cavi, quadri e dispositivi elettrici.",
     category: "construction", tags: ["electrical","systems","building","power"],
     related: ["mep","commissioning","bim"]
-  }
+  },
 
 
   // ─── LEGAL (Legale) ────────────────────────────────────────────────────────
