@@ -13,10 +13,7 @@ const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
 const DB_CONFIGURED = !SUPABASE_URL.includes('YOUR_PROJECT_ID');
 
 // ─── ElevenLabs TTS (pronuncia realistica) ───────────────────────────────────
-// 1. Registrati su https://elevenlabs.io (piano gratuito: 10.000 car/mese)
-// 2. Copia la tua API Key da Profile → API Key
-// 3. Scegli una voce da Voice Library e copia il Voice ID
-//    Consigliato: "Adam" → pNInz6obpgDQGcFmaJgB  (maschile, professionale)
-//                "Rachel" → 21m00Tcm4TlvDq8ikWAM (femminile, naturale)
-const ELEVENLABS_API_KEY  = 'YOUR_ELEVENLABS_API_KEY';
-const ELEVENLABS_VOICE_ID = 'pNInz6obpgDQGcFmaJgB'; // Adam — cambia se preferisci
+// Voci diverse per inglese e italiano — modello eleven_multilingual_v2
+const ELEVENLABS_API_KEY     = 'sk_e167261123bb712a5027c8db7fa1a6ac22dd992bbe9b93fe';
+const ELEVENLABS_VOICE_ID_EN = 'onwK4e9ZLuTAKqWW03F9'; // Daniel — britannico, professionale
+const ELEVENLABS_VOICE_ID_IT = 'nPczCjzI2devNBz1zQrb'; // Brian  — chiaro, adatto all'italiano

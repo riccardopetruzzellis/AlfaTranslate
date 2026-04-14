@@ -287,8 +287,9 @@ async function speakNative(text, lang) {
 
 // ElevenLabs: controlla se le credenziali sono configurate
 function elevenlabsConfigured() {
-  return typeof ELEVENLABS_API_KEY  !== 'undefined'
-      && typeof ELEVENLABS_VOICE_ID !== 'undefined'
+  return typeof ELEVENLABS_API_KEY     !== 'undefined'
+      && typeof ELEVENLABS_VOICE_ID_EN !== 'undefined'
+      && typeof ELEVENLABS_VOICE_ID_IT !== 'undefined'
       && !ELEVENLABS_API_KEY.includes('YOUR_');
 }
 
@@ -301,16 +302,18 @@ async function speak(text, lang, btnEl) {
     return speakNative(text, lang);
   }
 
+  // Voce diversa per inglese e italiano
+  const voiceId  = lang.startsWith('it') ? ELEVENLABS_VOICE_ID_IT : ELEVENLABS_VOICE_ID_EN;
+  const cacheKey = `${voiceId}:${text}`;
+  let   audioUrl = TTS_CACHE.get(cacheKey);
+
   // Indicatore di caricamento sul pulsante
   if (btnEl) btnEl.classList.add('speaking');
-
-  const cacheKey = `${lang}:${text}`;
-  let audioUrl   = TTS_CACHE.get(cacheKey);
 
   if (!audioUrl) {
     try {
       const res = await fetch(
-        `https://api.elevenlabs.io/v1/text-to-speech/${ELEVENLABS_VOICE_ID}/stream`,
+        `https://api.elevenlabs.io/v1/text-to-speech/${voiceId}/stream`,
         {
           method:  'POST',
           headers: {
