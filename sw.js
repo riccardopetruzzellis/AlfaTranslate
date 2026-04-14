@@ -3,7 +3,9 @@
 // Strategia: network-first → file sempre aggiornati quando online,
 //            fallback cache → funziona offline.
 
-const CACHE_NAME = 'alfatranslate-cache';
+// ⚠ Incrementa questo numero ad ogni deploy per forzare il refresh sui client
+const SW_VERSION = 2;
+const CACHE_NAME = `alfatranslate-cache-v${SW_VERSION}`;
 
 // Mai in cache: sempre dalla rete
 const NO_CACHE = ['/js/config.js'];
