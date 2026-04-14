@@ -76,6 +76,7 @@
         <button class="filter-btn filter-cat"        data-cat="finance"      aria-pressed="false">💹 Finance</button>
         <button class="filter-btn filter-cat"        data-cat="realestate"   aria-pressed="false">🏢 Real Estate</button>
         <button class="filter-btn filter-cat"        data-cat="construction" aria-pressed="false">🏗️ Edilizia</button>
+        <button class="filter-btn filter-cat"        data-cat="legal"        aria-pressed="false">⚖️ Legale</button>
         <button class="filter-btn filter-cat"        data-cat="favorites"    aria-pressed="false">★ Preferiti</button>
       </nav>
       <!-- Level row -->
@@ -178,8 +179,28 @@
       <span id="detail-lvl-badge" class="badge"></span>
       <span id="detail-cat-badge" class="badge"></span>
     </div>
-    <h2 id="detail-en" class="detail-en"></h2>
-    <p  id="detail-it" class="detail-it"></p>
+    <div class="detail-term-row">
+      <h2 id="detail-en" class="detail-en"></h2>
+      <button id="detail-speak-en" class="speak-btn" aria-label="Ascolta pronuncia inglese" title="Pronuncia EN">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+             stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
+          <path d="M15.54 8.46a5 5 0 0 1 0 7.07"/>
+          <path d="M19.07 4.93a10 10 0 0 1 0 14.14"/>
+        </svg>
+      </button>
+    </div>
+    <div class="detail-term-row">
+      <p id="detail-it" class="detail-it"></p>
+      <button id="detail-speak-it" class="speak-btn" aria-label="Ascolta pronuncia italiana" title="Pronuncia IT">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+             stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
+          <path d="M15.54 8.46a5 5 0 0 1 0 7.07"/>
+          <path d="M19.07 4.93a10 10 0 0 1 0 14.14"/>
+        </svg>
+      </button>
+    </div>
     <p class="detail-section-label">Definizione</p>
     <p id="detail-definition" class="detail-definition"></p>
     <p class="detail-section-label">Concetti</p>
@@ -230,6 +251,12 @@
       <label class="form-label" for="add-definition">Definizione in italiano *</label>
       <textarea id="add-definition" class="form-textarea" maxlength="1000"
                 placeholder="Breve spiegazione del termine…" required></textarea>
+      <small id="add-definition-counter" class="char-counter">0 / 1000</small>
+    </div>
+    <div class="form-field">
+      <label class="form-label" for="add-tags">Tag (separati da virgola)</label>
+      <input id="add-tags" class="form-input" type="text" maxlength="300"
+             placeholder="es. contratto, permesso, rischio" autocomplete="off" />
     </div>
     <div class="form-row">
       <div class="form-field">
@@ -239,6 +266,7 @@
           <option value="finance">Finance</option>
           <option value="realestate">Real Estate</option>
           <option value="construction">Edilizia</option>
+          <option value="legal">Legale</option>
         </select>
       </div>
       <div class="form-field">
@@ -288,6 +316,12 @@
       <label class="form-label" for="edit-definition">Definizione in italiano *</label>
       <textarea id="edit-definition" class="form-textarea" maxlength="1000"
                 required></textarea>
+      <small id="edit-definition-counter" class="char-counter">0 / 1000</small>
+    </div>
+    <div class="form-field">
+      <label class="form-label" for="edit-tags">Tag (separati da virgola)</label>
+      <input id="edit-tags" class="form-input" type="text" maxlength="300"
+             placeholder="es. contratto, permesso, rischio" autocomplete="off" />
     </div>
     <div class="form-row">
       <div class="form-field">
@@ -297,6 +331,7 @@
           <option value="finance">Finance</option>
           <option value="realestate">Real Estate</option>
           <option value="construction">Edilizia</option>
+          <option value="legal">Legale</option>
         </select>
       </div>
       <div class="form-field">

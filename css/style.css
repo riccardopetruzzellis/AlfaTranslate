@@ -22,6 +22,8 @@
   --avanzato-bg:        #FEF2F2;
   --custom-color:       #059669;
   --custom-bg:          #D1FAE5;
+  --legal-color:        #7C3AED;
+  --legal-bg:           #F5F3FF;
 
   --fav-color:          #F59E0B;
 
@@ -203,6 +205,7 @@ body {
 .filter-cat[data-cat="finance"].active      { color: var(--finance-color); }
 .filter-cat[data-cat="realestate"].active   { color: var(--realestate-color); }
 .filter-cat[data-cat="construction"].active { color: var(--construction-color); }
+.filter-cat[data-cat="legal"].active        { color: var(--legal-color); }
 .filter-cat[data-cat="favorites"].active    { color: var(--fav-color); }
 
 /* Level active tints */
@@ -243,6 +246,7 @@ body {
 .card:has(.badge-finance)      { border-left-color: var(--finance-color); }
 .card:has(.badge-realestate)   { border-left-color: var(--realestate-color); }
 .card:has(.badge-construction) { border-left-color: var(--construction-color); }
+.card:has(.badge-legal)        { border-left-color: var(--legal-color); }
 
 .card-related { opacity: 0.88; background: #FAFBFC; }
 .card-custom  { border-style: dashed; }
@@ -294,6 +298,7 @@ body {
 .badge-medio        { background: var(--medio-bg);        color: var(--medio-color); }
 .badge-avanzato     { background: var(--avanzato-bg);     color: var(--avanzato-color); }
 .badge-custom       { background: var(--custom-bg);       color: var(--custom-color); }
+.badge-legal        { background: var(--legal-bg);        color: var(--legal-color); }
 
 /* ─── Section Divider ────────────────────────────────────────────────────── */
 .section-divider {
@@ -401,8 +406,25 @@ mark {
 
 .detail-badges { display: flex; gap: 6px; margin-bottom: 10px; flex-wrap: wrap; }
 
-.detail-en { font-size: 1.5rem; font-weight: 800; color: var(--uk-blue); line-height: 1.2; margin-bottom: 4px; }
-.detail-it { font-size: 1rem; color: var(--text-muted); font-style: italic; margin-bottom: 12px; }
+.detail-term-row {
+  display: flex; align-items: flex-start; gap: 8px; margin-bottom: 0;
+}
+.detail-term-row + .detail-term-row { margin-top: 2px; }
+
+.detail-en { font-size: 1.5rem; font-weight: 800; color: var(--uk-blue); line-height: 1.2; flex: 1; min-width: 0; }
+.detail-it { font-size: 1rem; color: var(--text-muted); font-style: italic; flex: 1; min-width: 0; margin-bottom: 12px; }
+
+/* ─── Speak (TTS) Buttons ────────────────────────────────────────────────── */
+.speak-btn {
+  flex-shrink: 0; margin-top: 4px;
+  width: 30px; height: 30px; border: none;
+  border-radius: 50%; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  background: var(--bg); color: var(--text-muted);
+  transition: background var(--transition), color var(--transition), transform var(--transition);
+}
+.speak-btn:hover  { background: var(--uk-blue); color: white; }
+.speak-btn:active { transform: scale(0.9); }
 
 .detail-section-label {
   font-size: 0.7rem; font-weight: 700; text-transform: uppercase;
@@ -522,6 +544,18 @@ mark {
   border-color: var(--uk-blue);
   box-shadow: 0 0 0 3px rgba(1,33,105,0.12);
 }
+.form-input.invalid, .form-select.invalid, .form-textarea.invalid {
+  border-color: var(--uk-red);
+  box-shadow: 0 0 0 3px rgba(200,16,46,0.12);
+}
+
+/* ─── Char Counter ───────────────────────────────────────────────────────── */
+.char-counter {
+  font-size: 0.7rem; color: var(--text-muted);
+  text-align: right; margin-top: -6px;
+  display: block;
+}
+.char-counter.near-limit { color: var(--uk-red); font-weight: 600; }
 
 .form-textarea { resize: vertical; min-height: 80px; }
 

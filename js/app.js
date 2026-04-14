@@ -141,7 +141,8 @@ function search(query, category, level) {
 const CAT_BADGE = {
   finance:      { label: 'Finance',     cls: 'badge-finance' },
   realestate:   { label: 'Real Estate', cls: 'badge-realestate' },
-  construction: { label: 'Edilizia',    cls: 'badge-construction' }
+  construction: { label: 'Edilizia',    cls: 'badge-construction' },
+  legal:        { label: 'Legale',      cls: 'badge-legal' }
 };
 
 const LVL_BADGE = {
@@ -243,6 +244,43 @@ function renderResults(direct, related, query) {
   });
 }
 
+// ─── Pronunciation (TTS) ─────────────────────────────────────────────────────
+
+function speak(text, lang) {
+  if (!window.speechSynthesis) return;
+  window.speechSynthesis.cancel();
+  const utt = new SpeechSynthesisUtterance(text);
+  utt.lang = lang;
+  utt.rate = 0.9;
+  window.speechSynthesis.speak(utt);
+}
+
+// ─── Char Counter ─────────────────────────────────────────────────────────────
+
+function updateCharCounter(textareaId, counterId) {
+  const ta = document.getElementById(textareaId);
+  const counter = document.getElementById(counterId);
+  if (!ta || !counter) return;
+  const len = ta.value.length;
+  const max = parseInt(ta.getAttribute('maxlength'), 10) || 1000;
+  counter.textContent = `${len} / ${max}`;
+  counter.classList.toggle('near-limit', len > max * 0.85);
+}
+
+// ─── Form Validation ─────────────────────────────────────────────────────────
+
+function validateRequiredFields(fieldIds) {
+  let valid = true;
+  fieldIds.forEach(id => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    const empty = !el.value.trim();
+    el.classList.toggle('invalid', empty);
+    if (empty) valid = false;
+  });
+  return valid;
+}
+
 // ─── Detail Panel ─────────────────────────────────────────────────────────────
 
 function openDetail(id) {
@@ -284,6 +322,12 @@ function openDetail(id) {
     chip.addEventListener('click', () => openDetail(chip.dataset.id));
   });
 
+  // Speak buttons
+  const speakEnBtn = document.getElementById('detail-speak-en');
+  const speakItBtn = document.getElementById('detail-speak-it');
+  if (speakEnBtn) speakEnBtn.onclick = () => speak(term.en, 'en-GB');
+  if (speakItBtn) speakItBtn.onclick = () => speak(term.it, 'it-IT');
+
   // Favorite button state
   const favBtn = document.getElementById('detail-fav-btn');
   const fav = isFavorite(id);
@@ -324,8 +368,11 @@ function navigateBack() {
 // ─── Add Term Modal ───────────────────────────────────────────────────────────
 
 function openAddModal() {
-  document.getElementById('add-form').reset();
+  const form = document.getElementById('add-form');
+  form.reset();
+  form.querySelectorAll('.invalid').forEach(el => el.classList.remove('invalid'));
   document.getElementById('add-error').textContent = '';
+  updateCharCounter('add-definition', 'add-definition-counter');
   document.getElementById('add-modal').classList.add('open');
   document.getElementById('overlay').classList.add('show');
   document.getElementById('add-en').focus();
@@ -345,6 +392,12 @@ async function submitNewTerm(e) {
   const btn   = document.getElementById('add-submit');
   const errEl = document.getElementById('add-error');
   errEl.textContent = '';
+
+  if (!validateRequiredFields(['add-en', 'add-it', 'add-definition', 'add-category', 'add-level'])) {
+    errEl.textContent = 'Compila tutti i campi obbligatori.';
+    return;
+  }
+
   btn.disabled = true;
   btn.textContent = 'Salvataggio…';
 
@@ -353,7 +406,8 @@ async function submitNewTerm(e) {
     it:         document.getElementById('add-it').value.trim(),
     definition: document.getElementById('add-definition').value.trim(),
     category:   document.getElementById('add-category').value,
-    level:      document.getElementById('add-level').value
+    level:      document.getElementById('add-level').value,
+    tags:       document.getElementById('add-tags').value
   };
 
   try {
@@ -380,13 +434,18 @@ function openEditModal(id) {
 
   state.editingTermId = id;
 
-  document.getElementById('edit-term-id').value   = id;
-  document.getElementById('edit-en').value         = term.en;
-  document.getElementById('edit-it').value         = term.it;
-  document.getElementById('edit-definition').value = term.definition;
-  document.getElementById('edit-category').value   = term.category;
-  document.getElementById('edit-level').value      = term.level;
+  const form = document.getElementById('edit-form');
+  form.querySelectorAll('.invalid').forEach(el => el.classList.remove('invalid'));
+
+  document.getElementById('edit-term-id').value    = id;
+  document.getElementById('edit-en').value          = term.en;
+  document.getElementById('edit-it').value          = term.it;
+  document.getElementById('edit-definition').value  = term.definition;
+  document.getElementById('edit-category').value    = term.category;
+  document.getElementById('edit-level').value       = term.level;
+  document.getElementById('edit-tags').value        = (term.tags || []).join(', ');
   document.getElementById('edit-error').textContent = '';
+  updateCharCounter('edit-definition', 'edit-definition-counter');
 
   document.getElementById('edit-modal').classList.add('open');
   document.getElementById('overlay').classList.add('show');
@@ -407,6 +466,12 @@ async function submitEditTerm(e) {
   const btn   = document.getElementById('edit-submit');
   const errEl = document.getElementById('edit-error');
   errEl.textContent = '';
+
+  if (!validateRequiredFields(['edit-en', 'edit-it', 'edit-definition', 'edit-category', 'edit-level'])) {
+    errEl.textContent = 'Compila tutti i campi obbligatori.';
+    return;
+  }
+
   btn.disabled = true;
   btn.textContent = 'Salvataggio…';
 
@@ -416,7 +481,8 @@ async function submitEditTerm(e) {
     it:         document.getElementById('edit-it').value.trim(),
     definition: document.getElementById('edit-definition').value.trim(),
     category:   document.getElementById('edit-category').value,
-    level:      document.getElementById('edit-level').value
+    level:      document.getElementById('edit-level').value,
+    tags:       document.getElementById('edit-tags').value
   };
 
   try {
@@ -547,11 +613,11 @@ function clearSearch() {
 // ─── Stats ────────────────────────────────────────────────────────────────────
 
 function updateStats() {
-  const counts = { finance: 0, realestate: 0, construction: 0 };
-  GLOSSARY.forEach(t => counts[t.category]++);
+  const counts = { finance: 0, realestate: 0, construction: 0, legal: 0 };
+  GLOSSARY.forEach(t => { if (t.category in counts) counts[t.category]++; });
   const total = GLOSSARY.length + customTerms.length;
   document.getElementById('stats-summary').textContent =
-    `${total} termini · ${counts.finance} Finance · ${counts.realestate} Real Estate · ${counts.construction} Edilizia`;
+    `${total} termini · ${counts.finance} Finance · ${counts.realestate} Real Estate · ${counts.construction} Edilizia · ${counts.legal} Legale`;
 }
 
 // ─── PWA Install ──────────────────────────────────────────────────────────────
@@ -607,6 +673,26 @@ async function init() {
 
   // Stats
   updateStats();
+
+  // Char counters
+  ['add-definition', 'edit-definition'].forEach(id => {
+    const ta = document.getElementById(id);
+    if (ta) ta.addEventListener('input', () => updateCharCounter(id, id + '-counter'));
+  });
+
+  // Clear invalid class on user input
+  document.querySelectorAll('#add-form .form-input, #add-form .form-select, #add-form .form-textarea, #edit-form .form-input, #edit-form .form-select, #edit-form .form-textarea').forEach(el => {
+    el.addEventListener('input',  () => el.classList.remove('invalid'));
+    el.addEventListener('change', () => el.classList.remove('invalid'));
+  });
+
+  // Hide speak buttons if TTS not supported
+  if (!window.speechSynthesis) {
+    ['detail-speak-en', 'detail-speak-it'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.hidden = true;
+    });
+  }
 
   // Search
   document.getElementById('search-input').addEventListener('input', onSearchInput);

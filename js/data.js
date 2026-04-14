@@ -1051,6 +1051,270 @@ const GLOSSARY = [
     category: "construction", tags: ["electrical","systems","building","power"],
     related: ["mep","commissioning","bim"]
   }
+
+
+  // ─── LEGAL (Legale) ────────────────────────────────────────────────────────
+
+  // ── Proprietà & Trasferimento ──────────────────────────────────────────────
+  {
+    id: "deed_of_sale", level: "base",
+    en: "Deed of sale", it: "Atto di vendita / Rogito",
+    definition: "Documento legale redatto davanti a un notaio che trasferisce ufficialmente la proprietà di un immobile dall'alienante all'acquirente.",
+    category: "legal", tags: ["property","notary","transfer","real_estate","closing"],
+    related: ["notarial_deed","land_registry","property_title","closing_act"]
+  },
+  {
+    id: "notarial_deed", level: "base",
+    en: "Notarial deed", it: "Atto notarile",
+    definition: "Documento redatto e autenticato da un notaio, avente piena efficacia legale e probatoria ai sensi della legge italiana.",
+    category: "legal", tags: ["notary","document","authentication","legal"],
+    related: ["deed_of_sale","power_of_attorney","closing_act"]
+  },
+  {
+    id: "property_title", level: "base",
+    en: "Property title", it: "Titolo di proprietà",
+    definition: "Documento che attesta legalmente la titolarità di un diritto reale su un immobile; comprende atti di acquisto, successioni e donazioni.",
+    category: "legal", tags: ["ownership","property","real_estate","document"],
+    related: ["deed_of_sale","land_registry","encumbrance","lien_legal"]
+  },
+  {
+    id: "land_registry", level: "base",
+    en: "Land registry (Catasto)", it: "Catasto",
+    definition: "Registro pubblico che raccoglie dati geometrici e fiscali di tutti gli immobili sul territorio nazionale; base per il calcolo delle imposte.",
+    category: "legal", tags: ["cadastre","public_register","property","fiscal"],
+    related: ["cadastral_value","property_title","land_register"]
+  },
+  {
+    id: "land_register", level: "medio",
+    en: "Land register (Conservatoria)", it: "Conservatoria dei Registri Immobiliari",
+    definition: "Registro pubblico che trascrive tutti gli atti che modificano la titolarità o i vincoli su un immobile; verifica l'effettiva provenienza del bene.",
+    category: "legal", tags: ["public_register","transcription","property","mortgage"],
+    related: ["land_registry","lien_legal","encumbrance","property_title"]
+  },
+  {
+    id: "cadastral_value", level: "base",
+    en: "Cadastral value", it: "Valore catastale",
+    definition: "Valore fiscale attribuito a un immobile dal catasto, utilizzato per il calcolo di imposte quali IMU, IVIE e imposta ipotecaria.",
+    category: "legal", tags: ["fiscal","taxation","property","valuation"],
+    related: ["land_registry","market_value"]
+  },
+  {
+    id: "easement", level: "medio",
+    en: "Easement (Servitù)", it: "Servitù",
+    definition: "Diritto reale di godimento che limita le facoltà del proprietario (fondo servente) a vantaggio di un altro fondo (fondo dominante) o di un soggetto.",
+    category: "legal", tags: ["property","right","encumbrance","real_estate"],
+    related: ["encumbrance","property_title","lien_legal"]
+  },
+  {
+    id: "encumbrance", level: "medio",
+    en: "Encumbrance", it: "Onere / Vincolo immobiliare",
+    definition: "Qualsiasi diritto, gravame o limitazione iscritto su un immobile (ipoteca, servitù, pignoramento) che ne restringe la piena disponibilità.",
+    category: "legal", tags: ["property","mortgage","lien","restriction"],
+    related: ["lien_legal","easement","property_title","land_register"]
+  },
+  {
+    id: "lien_legal", level: "medio",
+    en: "Lien / Mortgage charge", it: "Ipoteca",
+    definition: "Garanzia reale iscritta su un immobile a favore di un creditore; in caso di inadempienza, il creditore può procedere all'esecuzione forzata.",
+    category: "legal", tags: ["mortgage","security","debt","property","guarantee"],
+    related: ["encumbrance","land_register","default_legal","property_title"]
+  },
+
+  // ── Contratti ─────────────────────────────────────────────────────────────
+  {
+    id: "letter_of_intent", level: "base",
+    en: "Letter of intent (LOI)", it: "Lettera d'intenti (LOI)",
+    definition: "Documento preliminare non vincolante che esprime la volontà delle parti di negoziare un accordo, delineando i termini principali dell'operazione.",
+    category: "legal", tags: ["contract","preliminary","negotiation","deal"],
+    related: ["term_sheet","nda","closing_act","due_diligence_legal"]
+  },
+  {
+    id: "term_sheet", level: "medio",
+    en: "Term sheet", it: "Term sheet / Heads of terms",
+    definition: "Documento che riassume i termini economici e legali essenziali di un'operazione prima della redazione del contratto definitivo.",
+    category: "legal", tags: ["contract","negotiation","deal","preliminary"],
+    related: ["letter_of_intent","nda","closing_act"]
+  },
+  {
+    id: "nda", level: "base",
+    en: "Non-disclosure agreement (NDA)", it: "Accordo di riservatezza (NDA)",
+    definition: "Contratto con cui le parti si obbligano a non divulgare informazioni confidenziali acquisite nel corso di trattative o rapporti commerciali.",
+    category: "legal", tags: ["confidentiality","contract","privacy","due_diligence"],
+    related: ["letter_of_intent","due_diligence_legal","term_sheet"]
+  },
+  {
+    id: "power_of_attorney", level: "base",
+    en: "Power of attorney (Procura)", it: "Procura",
+    definition: "Atto con cui un soggetto (il rappresentato) conferisce a un altro (il rappresentante) il potere di agire in suo nome e per suo conto.",
+    category: "legal", tags: ["representation","authorization","notary","legal"],
+    related: ["notarial_deed","closing_act","fiduciary"]
+  },
+  {
+    id: "escrow", level: "medio",
+    en: "Escrow", it: "Deposito a garanzia / Escrow",
+    definition: "Meccanismo per cui somme o documenti vengono detenuti da un terzo fiduciario fino al verificarsi di determinate condizioni contrattuali.",
+    category: "legal", tags: ["guarantee","trust","transaction","real_estate"],
+    related: ["closing_act","fiduciary","indemnity_clause","retention_bond"]
+  },
+  {
+    id: "closing_act", level: "base",
+    en: "Closing / Final deed", it: "Rogito / Atto definitivo",
+    definition: "Fase conclusiva di una transazione immobiliare in cui viene stipulato l'atto notarile di compravendita e trasferita la proprietà.",
+    category: "legal", tags: ["notary","transfer","property","real_estate","closing"],
+    related: ["deed_of_sale","notarial_deed","escrow","letter_of_intent"]
+  },
+  {
+    id: "indemnity_clause", level: "medio",
+    en: "Indemnity clause", it: "Clausola di indennizzo / Manleva",
+    definition: "Disposizione contrattuale con cui una parte si obbliga a tenere indenne l'altra da perdite, costi o responsabilità derivanti da determinati eventi.",
+    category: "legal", tags: ["contract","liability","protection","clause"],
+    related: ["liquidated_damages","breach_of_contract","warranty_legal"]
+  },
+  {
+    id: "force_majeure", level: "medio",
+    en: "Force majeure", it: "Forza maggiore",
+    definition: "Clausola che esonera una parte dalle obbligazioni contrattuali in caso di eventi imprevedibili e irresistibili esterni alla sua volontà.",
+    category: "legal", tags: ["contract","clause","risk","unforeseen"],
+    related: ["default_legal","breach_of_contract","liquidated_damages"]
+  },
+  {
+    id: "liquidated_damages", level: "medio",
+    en: "Liquidated damages (Penalty clause)", it: "Penale contrattuale",
+    definition: "Somma predeterminata nel contratto che una parte deve corrispondere all'altra in caso di inadempimento o ritardo nell'esecuzione.",
+    category: "legal", tags: ["contract","penalty","breach","damages"],
+    related: ["breach_of_contract","default_legal","indemnity_clause","retention_bond"]
+  },
+  {
+    id: "breach_of_contract", level: "base",
+    en: "Breach of contract", it: "Inadempimento / Violazione contrattuale",
+    definition: "Mancata o inesatta esecuzione delle obbligazioni assunte con un contratto, che legittima la controparte a richiedere risarcimento o risoluzione.",
+    category: "legal", tags: ["contract","default","liability","damages"],
+    related: ["default_legal","liquidated_damages","indemnity_clause","force_majeure"]
+  },
+  {
+    id: "default_legal", level: "base",
+    en: "Default / Breach", it: "Inadempienza",
+    definition: "Situazione in cui una parte non adempie alle proprie obbligazioni contrattuali o di pagamento nei termini e modi previsti.",
+    category: "legal", tags: ["contract","payment","obligation","breach"],
+    related: ["breach_of_contract","liquidated_damages","lien_legal","arbitration_legal"]
+  },
+  {
+    id: "governing_law", level: "medio",
+    en: "Governing law", it: "Legge applicabile / Foro competente",
+    definition: "Clausola contrattuale che identifica il sistema giuridico da applicare al contratto e il tribunale o arbitro competente in caso di controversia.",
+    category: "legal", tags: ["contract","clause","jurisdiction","arbitration"],
+    related: ["jurisdiction_legal","arbitration_legal","mediation_legal"]
+  },
+  {
+    id: "warranty_legal", level: "base",
+    en: "Warranty / Representations & Warranties", it: "Garanzie contrattuali (Rep & Warranties)",
+    definition: "Dichiarazioni e garanzie rilasciate da una parte in un contratto circa la veridicità di fatti, stati o qualità, con responsabilità in caso di falsità.",
+    category: "legal", tags: ["contract","guarantee","liability","m&a","due_diligence"],
+    related: ["indemnity_clause","breach_of_contract","due_diligence_legal"]
+  },
+  {
+    id: "due_diligence_legal", level: "medio",
+    en: "Legal due diligence", it: "Due diligence legale",
+    definition: "Analisi approfondita degli aspetti giuridici, contrattuali e regolatori di un'azienda o immobile prima di un'operazione di acquisizione o investimento.",
+    category: "legal", tags: ["analysis","risk","m&a","contract","legal"],
+    related: ["nda","warranty_legal","letter_of_intent","property_title"]
+  },
+  {
+    id: "fiduciary", level: "avanzato",
+    en: "Fiduciary", it: "Fiduciario",
+    definition: "Soggetto che agisce nell'interesse esclusivo di un altro (beneficiario) con obblighi di lealtà, diligenza e trasparenza; es. trustee, amministratore.",
+    category: "legal", tags: ["trust","obligation","management","governance"],
+    related: ["power_of_attorney","escrow","trustee"]
+  },
+
+  // ── Edilizia & Permessi ────────────────────────────────────────────────────
+  {
+    id: "building_permit", level: "base",
+    en: "Building permit", it: "Permesso di costruire (PdC)",
+    definition: "Provvedimento amministrativo rilasciato dal Comune che autorizza la realizzazione di interventi edilizi soggetti a titolo abilitativo.",
+    category: "legal", tags: ["construction","permit","municipality","planning"],
+    related: ["certificate_of_occupancy","change_order","contractor_agreement"]
+  },
+  {
+    id: "certificate_of_occupancy", level: "base",
+    en: "Certificate of occupancy", it: "Certificato di agibilità",
+    definition: "Documento rilasciato dal Comune che attesta la conformità dell'immobile alle norme di sicurezza, igiene e risparmio energetico per l'uso previsto.",
+    category: "legal", tags: ["construction","certificate","compliance","building"],
+    related: ["building_permit","contractor_agreement","defects_liability"]
+  },
+  {
+    id: "contractor_agreement", level: "base",
+    en: "Contractor agreement (Appalto)", it: "Contratto d'appalto",
+    definition: "Contratto con cui l'appaltatore si obbliga a eseguire un'opera o un servizio verso un corrispettivo, assumendo il rischio dell'organizzazione.",
+    category: "legal", tags: ["construction","contract","works","obligation"],
+    related: ["subcontract","performance_bond","change_order","retention_bond","liquidated_damages"]
+  },
+  {
+    id: "subcontract", level: "base",
+    en: "Subcontract", it: "Subappalto",
+    definition: "Accordo con cui l'appaltatore principale affida parte dei lavori a un subappaltatore, mantenendo la responsabilità verso il committente.",
+    category: "legal", tags: ["construction","contract","works","supply_chain"],
+    related: ["contractor_agreement","performance_bond","retention_bond"]
+  },
+  {
+    id: "performance_bond", level: "medio",
+    en: "Performance bond", it: "Cauzione / Fideiussione di esecuzione",
+    definition: "Garanzia fideiussoria rilasciata da una banca o assicurazione a favore del committente, a copertura del rischio di inadempimento dell'appaltatore.",
+    category: "legal", tags: ["guarantee","bond","construction","security"],
+    related: ["contractor_agreement","retention_bond","default_legal"]
+  },
+  {
+    id: "change_order", level: "medio",
+    en: "Change order", it: "Ordine di variazione / Perizia di variante",
+    definition: "Documento formale che modifica lo scopo, i costi o i tempi di un contratto di costruzione, richiedendo accordo scritto tra le parti.",
+    category: "legal", tags: ["construction","contract","variation","scope"],
+    related: ["contractor_agreement","liquidated_damages","building_permit"]
+  },
+  {
+    id: "retention_bond", level: "medio",
+    en: "Retention / Retention bond", it: "Ritenuta a garanzia",
+    definition: "Somma trattenuta dal committente sull'importo dovuto all'appaltatore a garanzia del corretto completamento e dell'assenza di vizi.",
+    category: "legal", tags: ["construction","guarantee","payment","bond"],
+    related: ["contractor_agreement","performance_bond","defects_liability","escrow"]
+  },
+  {
+    id: "defects_liability", level: "medio",
+    en: "Defects liability period", it: "Periodo di garanzia per vizi",
+    definition: "Lasso di tempo successivo al collaudo durante il quale l'appaltatore è responsabile per i vizi o difetti che emergono nell'opera realizzata.",
+    category: "legal", tags: ["construction","warranty","defects","liability"],
+    related: ["contractor_agreement","certificate_of_occupancy","retention_bond","warranty_legal"]
+  },
+
+  // ── Risoluzione delle controversie ────────────────────────────────────────
+  {
+    id: "arbitration_legal", level: "medio",
+    en: "Arbitration", it: "Arbitrato",
+    definition: "Procedura di risoluzione delle controversie extragiudiziale in cui le parti affidano la decisione a uno o più arbitri privati di loro scelta.",
+    category: "legal", tags: ["dispute","adr","resolution","contract"],
+    related: ["mediation_legal","governing_law","jurisdiction_legal","default_legal"]
+  },
+  {
+    id: "mediation_legal", level: "base",
+    en: "Mediation", it: "Mediazione",
+    definition: "Procedura ADR obbligatoria in Italia per alcune materie (es. condominio, diritti reali) in cui un mediatore facilita il raggiungimento di un accordo.",
+    category: "legal", tags: ["dispute","adr","resolution","mandatory"],
+    related: ["arbitration_legal","governing_law","breach_of_contract"]
+  },
+  {
+    id: "jurisdiction_legal", level: "medio",
+    en: "Jurisdiction / Venue", it: "Giurisdizione / Foro competente",
+    definition: "Attribuzione del potere a un giudice o tribunale di conoscere e decidere su una determinata controversia; può essere convenzionalmente derogata.",
+    category: "legal", tags: ["court","dispute","clause","competence"],
+    related: ["governing_law","arbitration_legal","breach_of_contract"]
+  },
+  {
+    id: "statute_of_limitations", level: "avanzato",
+    en: "Statute of limitations", it: "Prescrizione",
+    definition: "Istituto che estingue il diritto ad agire in giudizio decorso un certo periodo di tempo dall'insorgere del diritto stesso; in Italia varia da 1 a 10 anni.",
+    category: "legal", tags: ["time","rights","legal","civil_law"],
+    related: ["breach_of_contract","default_legal","warranty_legal"]
+  }
+
 ];
 
 // Lookup map
@@ -1062,7 +1326,8 @@ const CATEGORIES = {
   all:          { label: "Tutti",       color: "#6B7280" },
   finance:      { label: "Finance",     color: "#3B82F6" },
   realestate:   { label: "Real Estate", color: "#10B981" },
-  construction: { label: "Edilizia",    color: "#F59E0B" }
+  construction: { label: "Edilizia",    color: "#F59E0B" },
+  legal:        { label: "Legale",      color: "#7C3AED" }
 };
 
 // Level metadata

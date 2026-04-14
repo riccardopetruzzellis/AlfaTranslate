@@ -1,5 +1,5 @@
 // AlfaTranslate — Database Layer
-// Supabase REST API (condiviso) con fallback su localStorage (locale)
+// Supabase REST API (condiviso) con fallback automatico su localStorage
 
 const LOCAL_KEY = 'alfatranslate_custom_v2';
 
@@ -17,13 +17,11 @@ function sbHeaders(extra = {}) {
 // ─── Load custom terms ───────────────────────────────────────────────────────
 
 async function loadCustomTerms() {
-  if (!DB_CONFIGURED) {
-    return getLocalTerms();
-  }
+  if (!DB_CONFIGURED) return getLocalTerms();
   try {
     const res = await fetch(
       `${SUPABASE_URL}/rest/v1/custom_terms?select=*&order=created_at.asc`,
-      { headers: sbHeaders() }
+      { headers: sbHeaders(), signal: AbortSignal.timeout(8000) }
     );
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const rows = await res.json();
@@ -43,35 +41,30 @@ async function saveCustomTerm(data) {
     definition: data.definition.trim(),
     category:   data.category,
     level:      data.level,
-    tags:       [],
+    tags:       parseTags(data.tags || ''),
     related:    []
   };
 
   if (!DB_CONFIGURED) {
-    const term = { ...payload, id: 'local_' + Date.now(), isCustom: true };
-    const existing = getLocalTerms();
-    existing.push(term);
-    localStorage.setItem(LOCAL_KEY, JSON.stringify(existing));
+    return saveLocalTerm(payload);
+  }
+
+  try {
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/custom_terms`, {
+      method:  'POST',
+      headers: sbHeaders({ 'Prefer': 'return=representation' }),
+      body:    JSON.stringify(payload),
+      signal:  AbortSignal.timeout(8000)
+    });
+    if (!res.ok) throw new Error(await res.text() || `HTTP ${res.status}`);
+    const [saved] = await res.json();
+    const term = rowToTerm(saved);
+    mirrorLocalTerm(term);
     return term;
+  } catch (err) {
+    console.warn('Supabase save fallback:', err.message);
+    return { ...saveLocalTerm(payload), _offlineSaved: true };
   }
-
-  const res = await fetch(`${SUPABASE_URL}/rest/v1/custom_terms`, {
-    method:  'POST',
-    headers: sbHeaders({ 'Prefer': 'return=representation' }),
-    body:    JSON.stringify(payload)
-  });
-
-  if (!res.ok) {
-    const errText = await res.text();
-    throw new Error(errText || `HTTP ${res.status}`);
-  }
-
-  const [saved] = await res.json();
-  // Mirror to localStorage as backup
-  const locals = getLocalTerms();
-  locals.push(rowToTerm(saved));
-  localStorage.setItem(LOCAL_KEY, JSON.stringify(locals));
-  return rowToTerm(saved);
 }
 
 // ─── Update custom term ──────────────────────────────────────────────────────
@@ -82,59 +75,56 @@ async function updateCustomTerm(id, data) {
     it:         data.it.trim(),
     definition: data.definition.trim(),
     category:   data.category,
-    level:      data.level
+    level:      data.level,
+    tags:       parseTags(data.tags || '')
   };
 
-  // Local-only term (ID starts with "local_") → localStorage only
   if (!DB_CONFIGURED || String(id).startsWith('local_')) {
     return updateLocalTerm(id, payload);
   }
 
-  const res = await fetch(
-    `${SUPABASE_URL}/rest/v1/custom_terms?id=eq.${encodeURIComponent(id)}`,
-    {
-      method:  'PATCH',
-      headers: sbHeaders({ 'Prefer': 'return=representation' }),
-      body:    JSON.stringify(payload)
-    }
-  );
-
-  if (!res.ok) {
-    const errText = await res.text();
-    throw new Error(errText || `HTTP ${res.status}`);
+  try {
+    const res = await fetch(
+      `${SUPABASE_URL}/rest/v1/custom_terms?id=eq.${encodeURIComponent(id)}`,
+      {
+        method:  'PATCH',
+        headers: sbHeaders({ 'Prefer': 'return=representation' }),
+        body:    JSON.stringify(payload),
+        signal:  AbortSignal.timeout(8000)
+      }
+    );
+    if (!res.ok) throw new Error(await res.text() || `HTTP ${res.status}`);
+    const rows = await res.json();
+    if (!rows.length) throw new Error('Termine non trovato nel database');
+    const updated = rowToTerm(rows[0]);
+    updateLocalTerm(id, payload);
+    return updated;
+  } catch (err) {
+    console.warn('Supabase update fallback:', err.message);
+    return { ...updateLocalTerm(id, payload), _offlineSaved: true };
   }
-
-  const rows = await res.json();
-  if (!rows.length) throw new Error('Termine non trovato nel database');
-  const updated = rowToTerm(rows[0]);
-  // Mirror update to localStorage
-  updateLocalTerm(id, payload);
-  return updated;
 }
 
 // ─── Delete custom term ──────────────────────────────────────────────────────
 
 async function deleteCustomTerm(id) {
-  // Local-only term → localStorage only
-  if (!DB_CONFIGURED || String(id).startsWith('local_')) {
-    deleteLocalTerm(id);
-    return;
+  deleteLocalTerm(id);                      // rimuovi subito in locale
+
+  if (!DB_CONFIGURED || String(id).startsWith('local_')) return;
+
+  try {
+    const res = await fetch(
+      `${SUPABASE_URL}/rest/v1/custom_terms?id=eq.${encodeURIComponent(id)}`,
+      {
+        method:  'DELETE',
+        headers: sbHeaders(),
+        signal:  AbortSignal.timeout(8000)
+      }
+    );
+    if (!res.ok) throw new Error(await res.text() || `HTTP ${res.status}`);
+  } catch (err) {
+    console.warn('Supabase delete fallback (già rimosso in locale):', err.message);
   }
-
-  const res = await fetch(
-    `${SUPABASE_URL}/rest/v1/custom_terms?id=eq.${encodeURIComponent(id)}`,
-    {
-      method:  'DELETE',
-      headers: sbHeaders()
-    }
-  );
-
-  if (!res.ok) {
-    const errText = await res.text();
-    throw new Error(errText || `HTTP ${res.status}`);
-  }
-
-  deleteLocalTerm(id);
 }
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -153,24 +143,43 @@ function rowToTerm(row) {
   };
 }
 
+function parseTags(raw) {
+  if (Array.isArray(raw)) return raw;
+  return raw.split(',').map(t => t.trim().toLowerCase().replace(/\s+/g, '_')).filter(Boolean);
+}
+
 function getLocalTerms() {
-  try {
-    return JSON.parse(localStorage.getItem(LOCAL_KEY) || '[]');
-  } catch {
-    return [];
+  try { return JSON.parse(localStorage.getItem(LOCAL_KEY) || '[]'); }
+  catch { return []; }
+}
+
+function saveLocalTerm(payload) {
+  const term = { ...payload, id: 'local_' + Date.now(), isCustom: true };
+  const list = getLocalTerms();
+  list.push(term);
+  localStorage.setItem(LOCAL_KEY, JSON.stringify(list));
+  return term;
+}
+
+function mirrorLocalTerm(term) {
+  const list = getLocalTerms();
+  if (!list.find(t => t.id === term.id)) {
+    list.push(term);
+    localStorage.setItem(LOCAL_KEY, JSON.stringify(list));
   }
 }
 
 function updateLocalTerm(id, payload) {
-  const terms = getLocalTerms();
-  const idx = terms.findIndex(t => t.id === id);
+  const list = getLocalTerms();
+  const idx  = list.findIndex(t => t.id === id);
   if (idx < 0) throw new Error('Termine non trovato localmente');
-  terms[idx] = { ...terms[idx], ...payload };
-  localStorage.setItem(LOCAL_KEY, JSON.stringify(terms));
-  return terms[idx];
+  list[idx] = { ...list[idx], ...payload };
+  localStorage.setItem(LOCAL_KEY, JSON.stringify(list));
+  return list[idx];
 }
 
 function deleteLocalTerm(id) {
-  const terms = getLocalTerms().filter(t => t.id !== id);
-  localStorage.setItem(LOCAL_KEY, JSON.stringify(terms));
+  localStorage.setItem(LOCAL_KEY,
+    JSON.stringify(getLocalTerms().filter(t => t.id !== id))
+  );
 }
