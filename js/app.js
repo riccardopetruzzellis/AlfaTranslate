@@ -317,9 +317,10 @@ async function speak(text, lang, btnEl) {
         {
           method:  'POST',
           headers: {
-            'xi-api-key':   ELEVENLABS_API_KEY,
-            'Content-Type': 'application/json',
-            'Accept':       'audio/mpeg'
+            'xi-api-key':    ELEVENLABS_API_KEY,
+            'Authorization': `Bearer ${ELEVENLABS_API_KEY}`,
+            'Content-Type':  'application/json',
+            'Accept':        'audio/mpeg'
           },
           body: JSON.stringify({
             text,
