@@ -11,3 +11,12 @@ const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
 
 // Rilevamento automatico — non modificare
 const DB_CONFIGURED = !SUPABASE_URL.includes('YOUR_PROJECT_ID');
+
+// ─── ElevenLabs TTS (pronuncia realistica) ───────────────────────────────────
+// 1. Registrati su https://elevenlabs.io (piano gratuito: 10.000 car/mese)
+// 2. Copia la tua API Key da Profile → API Key
+// 3. Scegli una voce da Voice Library e copia il Voice ID
+//    Consigliato: "Adam" → pNInz6obpgDQGcFmaJgB  (maschile, professionale)
+//                "Rachel" → 21m00Tcm4TlvDq8ikWAM (femminile, naturale)
+const ELEVENLABS_API_KEY  = 'YOUR_ELEVENLABS_API_KEY';
+const ELEVENLABS_VOICE_ID = 'pNInz6obpgDQGcFmaJgB'; // Adam — cambia se preferisci

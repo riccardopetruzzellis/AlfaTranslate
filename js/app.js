@@ -246,54 +246,100 @@ function renderResults(direct, related, query) {
 
 // ─── Pronunciation (TTS) ─────────────────────────────────────────────────────
 
-// Carica le voci in modo asincrono (necessario su Chrome)
+const TTS_CACHE = new Map(); // cache audio URL per sessione
+let   _currentAudio = null;
+
+// Fallback: Web Speech API con selezione della voce migliore disponibile
 function getVoices() {
   return new Promise(resolve => {
     const list = window.speechSynthesis.getVoices();
     if (list.length) { resolve(list); return; }
-    window.speechSynthesis.addEventListener('voiceschanged', () => {
-      resolve(window.speechSynthesis.getVoices());
-    }, { once: true });
+    window.speechSynthesis.addEventListener('voiceschanged',
+      () => resolve(window.speechSynthesis.getVoices()), { once: true });
   });
 }
 
-// Sceglie la voce migliore per la lingua richiesta
 function pickBestVoice(voices, lang) {
-  const primary = lang.slice(0, 2).toLowerCase();
+  const primary    = lang.slice(0, 2).toLowerCase();
   const candidates = voices.filter(v => v.lang.toLowerCase().startsWith(primary));
   if (!candidates.length) return null;
-
-  const scored = candidates.map(v => {
-    let score = 0;
-    // Corrispondenza esatta con la locale (es. it-IT, en-GB)
-    if (v.lang.toLowerCase() === lang.toLowerCase()) score += 10;
-    // Voci neurali / enhanced / premium (iOS, Windows 11, Google)
-    if (/neural|enhanced|premium|natural/i.test(v.name)) score += 8;
-    // Google TTS online (ottima qualità su Chrome)
-    if (/google/i.test(v.name)) score += 6;
-    // Voci di sistema locali (migliori in offline)
-    if (v.localService) score += 2;
-    return { voice: v, score };
-  });
-
-  scored.sort((a, b) => b.score - a.score);
-  return scored[0].voice;
+  return candidates.map(v => {
+    let s = 0;
+    if (v.lang.toLowerCase() === lang.toLowerCase()) s += 10;
+    if (/neural|enhanced|premium|natural/i.test(v.name)) s += 8;
+    if (/google/i.test(v.name)) s += 6;
+    if (v.localService) s += 2;
+    return { voice: v, s };
+  }).sort((a, b) => b.s - a.s)[0].voice;
 }
 
-async function speak(text, lang) {
+async function speakNative(text, lang) {
   if (!window.speechSynthesis) return;
   window.speechSynthesis.cancel();
-
   const voices = await getVoices();
-  const utt   = new SpeechSynthesisUtterance(text);
+  const utt    = new SpeechSynthesisUtterance(text);
   utt.lang  = lang;
   utt.rate  = 0.85;
-  utt.pitch = 1;
-
   const voice = pickBestVoice(voices, lang);
   if (voice) utt.voice = voice;
-
   window.speechSynthesis.speak(utt);
+}
+
+// ElevenLabs: controlla se le credenziali sono configurate
+function elevenlabsConfigured() {
+  return typeof ELEVENLABS_API_KEY  !== 'undefined'
+      && typeof ELEVENLABS_VOICE_ID !== 'undefined'
+      && !ELEVENLABS_API_KEY.includes('YOUR_');
+}
+
+async function speak(text, lang, btnEl) {
+  // Ferma eventuale audio in corso
+  if (_currentAudio) { _currentAudio.pause(); _currentAudio = null; }
+
+  // Se ElevenLabs non è configurato → fallback nativo
+  if (!elevenlabsConfigured()) {
+    return speakNative(text, lang);
+  }
+
+  // Indicatore di caricamento sul pulsante
+  if (btnEl) btnEl.classList.add('speaking');
+
+  const cacheKey = `${lang}:${text}`;
+  let audioUrl   = TTS_CACHE.get(cacheKey);
+
+  if (!audioUrl) {
+    try {
+      const res = await fetch(
+        `https://api.elevenlabs.io/v1/text-to-speech/${ELEVENLABS_VOICE_ID}/stream`,
+        {
+          method:  'POST',
+          headers: {
+            'xi-api-key':   ELEVENLABS_API_KEY,
+            'Content-Type': 'application/json',
+            'Accept':       'audio/mpeg'
+          },
+          body: JSON.stringify({
+            text,
+            model_id: 'eleven_multilingual_v2',
+            voice_settings: { stability: 0.45, similarity_boost: 0.80, style: 0.25 }
+          }),
+          signal: AbortSignal.timeout(12000)
+        }
+      );
+      if (!res.ok) throw new Error(`ElevenLabs HTTP ${res.status}`);
+      const blob = await res.blob();
+      audioUrl   = URL.createObjectURL(blob);
+      TTS_CACHE.set(cacheKey, audioUrl);
+    } catch (err) {
+      console.warn('ElevenLabs TTS fallback:', err.message);
+      if (btnEl) btnEl.classList.remove('speaking');
+      return speakNative(text, lang);
+    }
+  }
+
+  if (btnEl) btnEl.classList.remove('speaking');
+  _currentAudio = new Audio(audioUrl);
+  _currentAudio.play().catch(() => speakNative(text, lang));
 }
 
 // ─── Char Counter ─────────────────────────────────────────────────────────────
@@ -366,8 +412,8 @@ function openDetail(id) {
   // Speak buttons
   const speakEnBtn = document.getElementById('detail-speak-en');
   const speakItBtn = document.getElementById('detail-speak-it');
-  if (speakEnBtn) speakEnBtn.onclick = () => speak(term.en, 'en-GB');
-  if (speakItBtn) speakItBtn.onclick = () => speak(term.it, 'it-IT');
+  if (speakEnBtn) speakEnBtn.onclick = () => speak(term.en, 'en-GB', speakEnBtn);
+  if (speakItBtn) speakItBtn.onclick = () => speak(term.it, 'it-IT', speakItBtn);
 
   // Favorite button state
   const favBtn = document.getElementById('detail-fav-btn');
