@@ -1,75 +1,60 @@
 // AlfaTranslate — Service Worker
 // Gruppo Alfano S.p.A.
+// Strategia: network-first → file sempre aggiornati quando online,
+//            fallback cache → funziona offline.
 
-const CACHE_NAME = 'alfatranslate-v5';
+const CACHE_NAME = 'alfatranslate-cache';
 
-// config.js escluso: contiene credenziali che devono sempre essere fresche
-const ASSETS = [
-  '/',
-  '/index.html',
-  '/css/style.css',
-  '/js/data.js',
-  '/js/db.js',
-  '/js/app.js',
-  '/manifest.json',
-  '/icons/icon.svg'
-];
-
-// File da non mettere mai in cache (sempre fetch dalla rete)
+// Mai in cache: sempre dalla rete
 const NO_CACHE = ['/js/config.js'];
 
-// Install: pre-cache all assets
+// Install: skipWaiting immediato → nessun attesa tra versioni
 self.addEventListener('install', event => {
-  event.waitUntil(
-    caches.open(CACHE_NAME)
-      .then(cache => cache.addAll(ASSETS))
-      .then(() => self.skipWaiting())
-  );
+  event.waitUntil(self.skipWaiting());
 });
 
-// Activate: clean up old caches
+// Activate: elimina cache vecchie e prende subito il controllo
 self.addEventListener('activate', event => {
   event.waitUntil(
     caches.keys()
       .then(keys => Promise.all(
-        keys
-          .filter(key => key !== CACHE_NAME)
-          .map(key => caches.delete(key))
+        keys.filter(k => k !== CACHE_NAME).map(k => caches.delete(k))
       ))
       .then(() => self.clients.claim())
   );
 });
 
-// Fetch: network-first per config.js, cache-first per tutto il resto
+// Fetch: network-first con fallback cache
 self.addEventListener('fetch', event => {
   if (event.request.method !== 'GET') return;
 
   const url = new URL(event.request.url);
-  const isNoCache = NO_CACHE.some(p => url.pathname === p);
 
-  if (isNoCache) {
-    // Sempre dalla rete, senza salvare in cache
+  // Richieste esterne (Supabase, ElevenLabs, ecc.) → pass-through
+  if (url.origin !== self.location.origin) return;
+
+  // File esclusi dalla cache → sempre dalla rete
+  if (NO_CACHE.some(p => url.pathname === p)) {
     event.respondWith(fetch(event.request));
     return;
   }
 
+  // Network-first: prova la rete, aggiorna la cache, fallback se offline
   event.respondWith(
-    caches.match(event.request)
-      .then(cached => {
-        if (cached) return cached;
-        return fetch(event.request)
-          .then(response => {
-            if (response && response.status === 200) {
-              const clone = response.clone();
-              caches.open(CACHE_NAME).then(cache => cache.put(event.request, clone));
-            }
-            return response;
-          })
-          .catch(() => {
-            if (event.request.mode === 'navigate') {
-              return caches.match('/index.html');
-            }
-          });
+    fetch(event.request)
+      .then(response => {
+        if (response && response.status === 200) {
+          const clone = response.clone();
+          caches.open(CACHE_NAME).then(cache => cache.put(event.request, clone));
+        }
+        return response;
       })
+      .catch(() =>
+        caches.match(event.request).then(cached => {
+          if (cached) return cached;
+          // Offline e non in cache: fallback su index.html per navigazione
+          if (event.request.mode === 'navigate') return caches.match('/index.html');
+        })
+      )
   );
 });
