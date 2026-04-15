@@ -308,8 +308,9 @@ async function speak(text, lang, btnEl) {
 
   if (!audioUrl) {
     try {
-      const res = await fetch(
-        `${SUPABASE_URL}/functions/v1/tts-proxy`,
+      const proxyUrl = `${SUPABASE_URL}/functions/v1/tts-proxy`;
+      console.log('TTS proxy URL:', proxyUrl);
+      const res = await fetch(proxyUrl,
         {
           method:  'POST',
           headers: {
@@ -322,7 +323,7 @@ async function speak(text, lang, btnEl) {
       );
       if (!res.ok) {
         const errBody = await res.text().catch(() => '');
-        throw new Error(`HTTP ${res.status}: ${errBody.slice(0, 120)}`);
+        throw new Error(`${proxyUrl} → ${res.status}: ${errBody.slice(0, 80)}`);
       }
       const blob = await res.blob();
       audioUrl   = URL.createObjectURL(blob);
