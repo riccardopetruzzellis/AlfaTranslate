@@ -14,6 +14,6 @@ const DB_CONFIGURED = !SUPABASE_URL.includes('YOUR_PROJECT_ID');
 
 // ─── ElevenLabs TTS (pronuncia realistica) ───────────────────────────────────
 // Voci diverse per inglese e italiano — modello eleven_multilingual_v2
-const ELEVENLABS_API_KEY     = 'sk_e167261123bb712a5027c8db7fa1a6ac22dd992bbe9b93fe';
+const ELEVENLABS_API_KEY     = 'sk_74f154a14b3e3feff4f4acb3f1d25bf6c7959770696628b1';
 const ELEVENLABS_VOICE_ID_EN = 'pNInz6obpgDQGcFmaJgB'; // Adam  — maschile, professionale
 const ELEVENLABS_VOICE_ID_IT = '21m00Tcm4TlvDq8ikWAM'; // Rachel — femminile, chiara
