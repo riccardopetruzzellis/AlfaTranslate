@@ -329,7 +329,10 @@ async function speak(text, lang, btnEl) {
           signal: AbortSignal.timeout(12000)
         }
       );
-      if (!res.ok) throw new Error(`ElevenLabs HTTP ${res.status}`);
+      if (!res.ok) {
+        const errBody = await res.text().catch(() => '');
+        throw new Error(`HTTP ${res.status}: ${errBody.slice(0, 120)}`);
+      }
       const blob = await res.blob();
       audioUrl   = URL.createObjectURL(blob);
       TTS_CACHE.set(cacheKey, audioUrl);
