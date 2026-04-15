@@ -308,8 +308,7 @@ async function speak(text, lang, btnEl) {
 
   if (!audioUrl) {
     try {
-      const proxyUrl = `${SUPABASE_URL}/functions/v1/tts-proxy`;
-      console.log('TTS proxy URL:', proxyUrl);
+      const proxyUrl = `${SUPABASE_URL}/functions/v1/bright-api`;
       const res = await fetch(proxyUrl,
         {
           method:  'POST',
