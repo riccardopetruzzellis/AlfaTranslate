@@ -285,48 +285,39 @@ async function speakNative(text, lang) {
   window.speechSynthesis.speak(utt);
 }
 
-// ElevenLabs: controlla se le credenziali sono configurate
-function elevenlabsConfigured() {
-  return typeof ELEVENLABS_API_KEY     !== 'undefined'
+// TTS via Supabase Edge Function proxy (la chiave ElevenLabs è un secret server-side)
+function ttsConfigured() {
+  return typeof SUPABASE_URL          !== 'undefined'
       && typeof ELEVENLABS_VOICE_ID_EN !== 'undefined'
       && typeof ELEVENLABS_VOICE_ID_IT !== 'undefined'
-      && !ELEVENLABS_API_KEY.includes('YOUR_');
+      && DB_CONFIGURED;
 }
 
 async function speak(text, lang, btnEl) {
-  // Ferma eventuale audio in corso
   if (_currentAudio) { _currentAudio.pause(); _currentAudio = null; }
 
-  // Se ElevenLabs non è configurato → fallback nativo
-  if (!elevenlabsConfigured()) {
+  if (!ttsConfigured()) {
     return speakNative(text, lang);
   }
 
-  // Voce diversa per inglese e italiano
   const voiceId  = lang.startsWith('it') ? ELEVENLABS_VOICE_ID_IT : ELEVENLABS_VOICE_ID_EN;
   const cacheKey = `${voiceId}:${text}`;
   let   audioUrl = TTS_CACHE.get(cacheKey);
 
-  // Indicatore di caricamento sul pulsante
   if (btnEl) btnEl.classList.add('speaking');
 
   if (!audioUrl) {
     try {
       const res = await fetch(
-        `https://api.elevenlabs.io/v1/text-to-speech/${voiceId}/stream`,
+        `${SUPABASE_URL}/functions/v1/tts-proxy`,
         {
           method:  'POST',
           headers: {
-            'xi-api-key':   ELEVENLABS_API_KEY,
-            'Content-Type': 'application/json',
-            'Accept':       'audio/mpeg'
+            'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+            'Content-Type':  'application/json'
           },
-          body: JSON.stringify({
-            text,
-            model_id: 'eleven_multilingual_v2',
-            voice_settings: { stability: 0.45, similarity_boost: 0.80, style: 0.25 }
-          }),
-          signal: AbortSignal.timeout(12000)
+          body:   JSON.stringify({ text, voiceId }),
+          signal: AbortSignal.timeout(15000)
         }
       );
       if (!res.ok) {
@@ -337,7 +328,7 @@ async function speak(text, lang, btnEl) {
       audioUrl   = URL.createObjectURL(blob);
       TTS_CACHE.set(cacheKey, audioUrl);
     } catch (err) {
-      console.warn('ElevenLabs TTS fallback:', err.message);
+      console.warn('TTS proxy fallback:', err.message);
       showToast('⚠ Pronuncia: ' + err.message);
       if (btnEl) btnEl.classList.remove('speaking');
       return speakNative(text, lang);

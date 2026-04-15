@@ -12,8 +12,6 @@ const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
 // Rilevamento automatico — non modificare
 const DB_CONFIGURED = !SUPABASE_URL.includes('YOUR_PROJECT_ID');
 
-// ─── ElevenLabs TTS (pronuncia realistica) ───────────────────────────────────
-// Voci diverse per inglese e italiano — modello eleven_multilingual_v2
-const ELEVENLABS_API_KEY     = 'sk_74f154a14b3e3feff4f4acb3f1d25bf6c7959770696628b1';
-const ELEVENLABS_VOICE_ID_EN = 'pNInz6obpgDQGcFmaJgB'; // Adam  — maschile, professionale
+// ─── ElevenLabs TTS — voice ID (la chiave API è un secret Supabase, non qui) ─
+const ELEVENLABS_VOICE_ID_EN = 'pNInz6obpgDQGcFmaJgB'; // Adam   — maschile, professionale
 const ELEVENLABS_VOICE_ID_IT = '21m00Tcm4TlvDq8ikWAM'; // Rachel — femminile, chiara
