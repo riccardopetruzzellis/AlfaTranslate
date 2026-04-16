@@ -12,6 +12,3 @@ const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
 // Rilevamento automatico — non modificare
 const DB_CONFIGURED = !SUPABASE_URL.includes('YOUR_PROJECT_ID');
 
-// ─── ElevenLabs TTS — voice ID (la chiave API è un secret Supabase, non qui) ─
-const ELEVENLABS_VOICE_ID_EN = 'pNInz6obpgDQGcFmaJgB'; // Adam   — maschile, professionale
-const ELEVENLABS_VOICE_ID_IT = '21m00Tcm4TlvDq8ikWAM'; // Rachel — femminile, chiara

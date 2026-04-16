@@ -246,10 +246,6 @@ function renderResults(direct, related, query) {
 
 // ─── Pronunciation (TTS) ─────────────────────────────────────────────────────
 
-const TTS_CACHE = new Map(); // cache audio URL per sessione
-let   _currentAudio = null;
-
-// Fallback: Web Speech API con selezione della voce migliore disponibile
 function getVoices() {
   return new Promise(resolve => {
     const list = window.speechSynthesis.getVoices();
@@ -273,8 +269,9 @@ function pickBestVoice(voices, lang) {
   }).sort((a, b) => b.s - a.s)[0].voice;
 }
 
-async function speakNative(text, lang) {
+async function speak(text, lang, btnEl) {
   if (!window.speechSynthesis) return;
+  if (btnEl) btnEl.classList.add('speaking');
   window.speechSynthesis.cancel();
   const voices = await getVoices();
   const utt    = new SpeechSynthesisUtterance(text);
@@ -282,62 +279,9 @@ async function speakNative(text, lang) {
   utt.rate  = 0.85;
   const voice = pickBestVoice(voices, lang);
   if (voice) utt.voice = voice;
+  utt.onend = () => { if (btnEl) btnEl.classList.remove('speaking'); };
+  utt.onerror = () => { if (btnEl) btnEl.classList.remove('speaking'); };
   window.speechSynthesis.speak(utt);
-}
-
-// TTS via Supabase Edge Function proxy (la chiave ElevenLabs è un secret server-side)
-function ttsConfigured() {
-  return typeof SUPABASE_URL          !== 'undefined'
-      && typeof ELEVENLABS_VOICE_ID_EN !== 'undefined'
-      && typeof ELEVENLABS_VOICE_ID_IT !== 'undefined'
-      && DB_CONFIGURED;
-}
-
-async function speak(text, lang, btnEl) {
-  if (_currentAudio) { _currentAudio.pause(); _currentAudio = null; }
-
-  if (!ttsConfigured()) {
-    return speakNative(text, lang);
-  }
-
-  const voiceId  = lang.startsWith('it') ? ELEVENLABS_VOICE_ID_IT : ELEVENLABS_VOICE_ID_EN;
-  const cacheKey = `${voiceId}:${text}`;
-  let   audioUrl = TTS_CACHE.get(cacheKey);
-
-  if (btnEl) btnEl.classList.add('speaking');
-
-  if (!audioUrl) {
-    try {
-      const proxyUrl = `${SUPABASE_URL}/functions/v1/bright-api`;
-      const res = await fetch(proxyUrl,
-        {
-          method:  'POST',
-          headers: {
-            'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
-            'Content-Type':  'application/json'
-          },
-          body:   JSON.stringify({ text, voiceId }),
-          signal: AbortSignal.timeout(15000)
-        }
-      );
-      if (!res.ok) {
-        const errBody = await res.text().catch(() => '');
-        throw new Error(`${proxyUrl} → ${res.status}: ${errBody.slice(0, 80)}`);
-      }
-      const blob = await res.blob();
-      audioUrl   = URL.createObjectURL(blob);
-      TTS_CACHE.set(cacheKey, audioUrl);
-    } catch (err) {
-      console.warn('TTS proxy fallback:', err.message);
-      showToast('⚠ Pronuncia: ' + err.message);
-      if (btnEl) btnEl.classList.remove('speaking');
-      return speakNative(text, lang);
-    }
-  }
-
-  if (btnEl) btnEl.classList.remove('speaking');
-  _currentAudio = new Audio(audioUrl);
-  _currentAudio.play().catch(() => speakNative(text, lang));
 }
 
 // ─── Char Counter ─────────────────────────────────────────────────────────────
